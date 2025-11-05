@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Patient Details - Lab Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 15mm 20mm 20mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 25px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #007bff;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+        }
+
+        .info-item span {
+            font-weight: bold;
+        }
+
+        .subtest-section {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .subtest-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subtest-header h2 {
+            font-size: 15px;
+            color: #333;
+        }
+
+        .subtest-btn {
+            background: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .subtest-btn:hover {
+            background: #0056b3;
+        }
+
+        #subtestContainer {
+            display: none;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .subtest-row {
+            display: grid;
+            grid-template-columns: 1.2fr 2fr 0.6fr 0.6fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* Specific alignment for textarea rows */
+        .subtest-row.textarea-row {
+            align-items: flex-start;
+            /* Aligns label/checkbox to the top of the textarea */
+            padding-bottom: 8px;
+        }
+
+        .subtest-row label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+            /* Include padding and border in the element's total width and height */
+        }
+
+        textarea {
+            resize: vertical;
+            /* Allow vertical resizing */
+            min-height: 50px;
+            /* Default height for textareas */
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.1);
+        }
+
+        .btn-row {
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        .btn-row button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-close {
+            background: #dc3545;
+            color: white;
+        }
+
+        .report-layout {
+            margin-top: 25px;
+            border: 1px solid #999;
+            border-radius: 6px;
+            padding: 20px;
+            position: relative;
+            font-size: 13px;
+            min-height: 400px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .report-header p {
+            margin: 3px 0;
+        }
+
+        .subtest-table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+
+        .subtest-table th,
+        .subtest-table td {
+            border: 1px solid #999;
+            padding: 6px;
+        }
+
+        .subtest-table th {
+            background-color: #f0f0f0;
+        }
+
+        .print-btn {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            background: #007bff;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .report-footer {
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        /* Styles for signature layout */
+        .report-footer strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .signature-block {
+            display: block;
+            margin-top: 5px;
+        }
+
+        .signature-block img {
+            width: 100px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .signature-block p {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Print media query */
+        @media print {
+            .signature-block {
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Patient Details</h1>
+        <div class="info-grid">
+            <div class="info-item"><span>Patient Name:</span> <span id="patientName">---</span></div>
+            <div class="info-item"><span>Sample ID:</span> <span id="sampleId">---</span></div>
+            <div class="info-item"><span>Age/Gender:</span> <span id="ageGender">---</span></div>
+            <div class="info-item"><span>Contact No:</span> <span id="contact">---</span></div>
+            <div class="info-item"><span>Referred By:</span> <span id="referredBy">---</span></div>
+            <div class="info-item"><span>Requested By:</span> <span id="requestedBy">---</span></div>
+            <div class="info-item"><span>Date of Collection:</span> <span id="collectionDate">---</span></div>
+            <div class="info-item"><span>Date of Registration:</span> <span id="registrationDate">---</span></div>
+            <div class="info-item"><span>Date of Reporting:</span> <span id="reportDate">---</span></div>
+        </div>
+
+        <div class="subtest-section">
+            <div class="subtest-header">
+                <h2>Test Name: <span id="testName">Medium Tissue Biopsy Test</span></h2>
+                <button class="subtest-btn" onclick="toggleSubtest()">+ Sub Test</button>
+            </div>
+            <div id="subtestContainer">
+
+                <div class="subtest-row">
+                    <label>Specimen Type:</label>
+                    <input type="text" id="specimenType" />
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="specimenAbn" />
+                </div>
+
+                <div class="subtest-row textarea-row">
+                    <label>Clinical History/Details:</label>
+                    <textarea id="clinicalHistory"></textarea>
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="historyAbn" />
+                </div>
+
+                <div class="subtest-row textarea-row">
+                    <label>Chief Complaint:</label>
+                    <textarea id="chiefComplaint"></textarea>
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="chiefAbn" />
+                </div>
+
+                <div class="subtest-row">
+                    <label>USG Findings:</label>
+                    <input type="text" id="usgFindings" />
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="usgAbn" />
+                </div>
+
+                <div class="subtest-row textarea-row">
+                    <label>Gross:</label>
+                    <textarea id="gross"></textarea>
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="grossAbn" />
+                </div>
+
+                <div class="subtest-row textarea-row">
+                    <label>Microscopy:</label>
+                    <textarea id="microscopy"></textarea>
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="microAbn" />
+                </div>
+
+                <div class="subtest-row textarea-row">
+                    <label>Impression:</label>
+                    <textarea id="impression"></textarea>
+                    <label>Abnormal</label>
+                    <input type="checkbox" id="impressionAbn" />
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-save" onclick="saveSubtest()">Save</button>
+                    <button class="btn-close" onclick="toggleSubtest()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="print-btn" onclick="window.print()">Print Report</button>
+
+        <div class="report-layout">
+            <div class="report-header">
+                <div>
+                    <p><strong>Sample ID:</strong> <span id="rSampleId">---</span></p>
+                    <p><strong>Patient:</strong> <span id="rName">---</span></p>
+                    <p><strong>Age/Gender:</strong> <span id="rAgeGender">---</span></p>
+                    <p><strong>Referred By:</strong> <span id="rReferred">---</span></p>
+                    <p><strong>Requested By:</strong> <span id="rRequested">---</span></p>
+                </div>
+                <div>
+                    <p><strong>Date of Collection:</strong> <span id="rCollection">---</span></p>
+                    <p><strong>Date of Registration:</strong> <span id="rRegistration">---</span></p>
+                    <p><strong>Date of Reporting:</strong> <span id="rReporting">---</span></p>
+                </div>
+            </div>
+
+            <table class="subtest-table" id="reportSubtests">
+                <thead>
+                    <tr>
+                        <th>Sub Test</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="report-footer">
+                <strong>Report Checked By:</strong>
+                <div class="signature-block">
+                    <img src="Signature.jpg" alt="Pathologist Signature" id="signatureImage" />
+                    <p><strong>Consultant Pathologist</strong><br>NMC No: 23690</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSubtest() {
+            const div = document.getElementById('subtestContainer');
+            div.style.display = div.style.display === 'none' || div.style.display === '' ? 'block' : 'none';
+        }
+
+        function saveSubtest() {
+            const subtests = [
+                { name: 'Specimen Type', value: document.getElementById('specimenType').value },
+                { name: 'Clinical History/Details', value: document.getElementById('clinicalHistory').value },
+                { name: 'Chief Complaint', value: document.getElementById('chiefComplaint').value },
+                { name: 'USG Findings', value: document.getElementById('usgFindings').value },
+                { name: 'Gross', value: document.getElementById('gross').value },
+                { name: 'Microscopy', value: document.getElementById('microscopy').value },
+                { name: 'Impression', value: document.getElementById('impression').value },
+            ];
+            localStorage.setItem('subtests', JSON.stringify(subtests));
+            renderSubtests();
+            alert("Subtests saved!");
+        }
+
+        function renderSubtests() {
+            const tbody = document.querySelector('#reportSubtests tbody');
+            tbody.innerHTML = '';
+            const subtests = JSON.parse(localStorage.getItem('subtests') || '[]');
+            subtests.forEach(s => {
+                if (s.value.trim() !== '') {
+                    const row = document.createElement('tr');
+                    // Replace newlines in textarea content with <br> for proper display in the table
+                    const resultHtml = s.value.replace(/\n/g, '<br>');
+                    row.innerHTML = `<td>${s.name}</td><td>${resultHtml}</td>`;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        window.onload = function () {
+            const data = JSON.parse(localStorage.getItem('selectedPatient') || '{}');
+            if (data.firstName) {
+                const fullName = `${data.firstName} ${data.middleName || ''} ${data.lastName || ''}`.trim();
+                const ageGender = `${data.age || '-'} / ${data.sex || '-'}`;
+
+                // Patient Details Section
+                document.getElementById('patientName').textContent = fullName;
+                document.getElementById('sampleId').textContent = data.sampleNumber || '---';
+                document.getElementById('ageGender').textContent = ageGender;
+                document.getElementById('contact').textContent = data.contact || '---';
+                document.getElementById('referredBy').textContent = data.referredBy || '---';
+                document.getElementById('requestedBy').textContent = data.requestedBy || '---';
+                document.getElementById('collectionDate').textContent = data.date || '---';
+                document.getElementById('registrationDate').textContent = data.date || '---';
+                document.getElementById('reportDate').textContent = new Date().toLocaleDateString();
+
+                // Report Layout Section
+                document.getElementById('rSampleId').textContent = data.sampleNumber || '---';
+                document.getElementById('rName').textContent = fullName;
+                document.getElementById('rAgeGender').textContent = ageGender;
+                document.getElementById('rReferred').textContent = data.referredBy || '---';
+                document.getElementById('rRequested').textContent = data.requestedBy || '---';
+                document.getElementById('rCollection').textContent = data.date || '---';
+                document.getElementById('rRegistration').textContent = data.date || '---';
+                document.getElementById('rReporting').textContent = new Date().toLocaleDateString();
+            }
+
+            renderSubtests();
+        };
+    </script>
+</body>
+
+</html>
