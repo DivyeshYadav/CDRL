@@ -4,297 +4,130 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="pageTitle">Patient Details - Lab Report</title>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
+    <title>Patient Details - Lab Report</title>
     <style>
-        /* ... (Keep all your existing CSS styles here) ... */
         @page {
             size: A4;
             margin: 15mm;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            background: #f8f9fa;
-            color: #343a40;
+            background: #f4f6f8;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 30px auto;
             background: #fff;
-            padding: 30px 40px;
+            padding: 25px 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             position: relative;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 25px;
-            font-size: 24px;
+            margin-bottom: 20px;
+            font-size: 22px;
             color: #007bff;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 10px;
         }
 
-        /* --- INFO GRID (Patient Header) --- */
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px 30px;
-            margin-bottom: 25px;
-            font-size: 14px;
-            border: 1px solid #ced4da;
-            padding: 15px;
-            border-radius: 6px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+            margin-bottom: 20px;
+            font-size: 13px;
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed #e9ecef;
-            padding: 5px 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
         }
 
         .info-item span {
-            font-weight: 600;
-        }
-
-        .info-item strong {
-            color: #005691;
-        }
-
-        .info-item select {
-            border: 1px solid #ced4da;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        /* --- ACTION BUTTONS --- */
-        .action-buttons {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-
-        .btn-action {
-            border: none;
-            border-radius: 5px;
-            padding: 8px 15px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        .btn-print {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-print:hover {
-            background: #0056b3;
-        }
-
-        .btn-back {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-back:hover {
-            background: #5a6268;
-        }
-
-        /* --- SUBTEST ENTRY FORM --- */
-        .subtest-section {
-            margin-top: 25px;
-        }
-
-        .subtest-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ced4da;
-        }
-
-        .subtest-header h2 {
-            font-size: 16px;
-            color: #005691;
-            margin: 0;
-        }
-
-        .subtest-btn {
-            background: #007bff;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        #subtestContainer {
-            display: none;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background: #f8f9fa;
-        }
-
-        .subtest-row {
-            display: grid;
-            grid-template-columns: 1.2fr 2fr 0.6fr 0.6fr;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .subtest-row label {
-            font-weight: 600;
-        }
-
-        input[type="text"] {
-            padding: 6px;
-            font-size: 14px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-        }
-
-        .btn-row {
-            grid-column: 1 / 5;
-            text-align: right;
-            margin-top: 15px;
-        }
-
-        .btn-row button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .btn-save {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-close {
-            background: #dc3545;
-            color: white;
-        }
-
-        /* --- FINAL REPORT LAYOUT --- */
-        .report-layout {
-            margin-top: 25px;
-            border: 2px solid #343a40;
-            border-radius: 6px;
-            padding: 25px;
-            font-size: 14px;
-        }
-
-        .report-header-print {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #adb5bd;
-            padding-bottom: 10px;
-        }
-
-        .report-header-print p {
-            margin: 5px 0;
+            font-weight: bold;
         }
 
         .subtest-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .subtest-table th,
         .subtest-table td {
-            border: 1px solid #adb5bd;
-            padding: 10px;
-            vertical-align: top;
-            text-align: left;
+            border: 1px solid #999;
+            padding: 6px;
         }
 
         .subtest-table th {
             background-color: #f0f0f0;
-            font-weight: 700;
         }
 
-        .abnormal-result {
-            color: #dc3545;
-            font-weight: bold;
+        input[type="text"] {
+            width: 100%;
+            border: none;
+            padding: 4px;
+            font-size: 13px;
+            outline: none;
         }
 
-        /* Footer - inside box */
+        /* Footer section */
         .report-footer {
             margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #adb5bd;
-            text-align: right;
+            font-size: 13px;
+            border: 1px solid #999;
+            border-radius: 6px;
+            padding: 10px;
         }
 
-        .signature-box {
-            display: inline-block;
-            text-align: center;
-        }
-
-        .signature-line {
-            display: block;
-            margin: 0 auto 5px auto;
-            width: 100px;
-            border-bottom: 1px solid #343a40;
+        .report-footer select {
+            padding: 3px 6px;
+            font-size: 13px;
+            margin-top: 4px;
         }
 
         .signature-box img {
             width: 80px;
-            height: auto;
             display: none;
-            margin: 0 auto;
-        }
-
-        .consultant-title {
             margin-top: 5px;
-            font-weight: bold;
         }
 
-        .consultant-info {
-            margin: 5px 0 0 0;
-            line-height: 1.4;
+        .btn-row {
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        .btn-row button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
             font-size: 13px;
+            color: white;
         }
 
-        /* Print Styles */
+        .btn-print {
+            background: #007bff;
+        }
+
+        .btn-print:hover {
+            background: #0056b3;
+        }
+
         @media print {
             body {
                 background: white;
-                margin: 0;
             }
 
-            .action-buttons,
-            .subtest-section,
-            .info-item.payment-status-item,
-            select,
-            a[href] {
+            .btn-row,
+            select {
                 display: none !important;
             }
 
@@ -306,29 +139,12 @@
                 padding: 0;
             }
 
-            .report-layout {
+            input[type="text"] {
                 border: none;
-                padding: 0;
-            }
-
-            .report-header-print {
-                margin-bottom: 10px;
-                padding-bottom: 5px;
-            }
-
-            .report-footer {
-                padding-top: 20px;
-                margin-top: 30px;
-                border-top: 2px solid #343a40;
             }
 
             .signature-box img {
-                display: block !important;
-            }
-
-            .signature-line {
-                display: block !important;
-                border-bottom: 1px solid #343a40;
+                display: block;
             }
         }
     </style>
@@ -336,355 +152,111 @@
 
 <body>
     <div class="container">
-
-        <div class="action-buttons">
-            <a href="Dashboard.html" class="btn-action btn-back">⬅️ Back to Dashboard</a>
-            <button class="btn-action btn-print" onclick="window.print()">🖨️ Print Report</button>
-        </div>
-
-        <h1 id="mainHeading">Patient Report Details</h1>
+        <h1>Patient Details</h1>
 
         <div class="info-grid">
-            <div class="info-item"><strong>Patient Name:</strong> <span id="patientName">---</span></div>
-            <div class="info-item"><strong>Sample ID:</strong> <span id="sampleId">---</span></div>
-            <div class="info-item"><strong>Age/Gender:</strong> <span id="ageGender">---</span></div>
-            <div class="info-item"><strong>Contact No:</strong> <span id="contact">---</span></div>
-            <div class="info-item"><strong>Referred By:</strong> <span id="referredBy">---</span></div>
-            <div class="info-item"><strong>Requested By:</strong> <span id="requestedBy">---</span></div>
-            <div class="info-item"><strong>Collection Date:</strong> <span id="collectionDate">---</span></div>
-            <div class="info-item"><strong>Registration Date:</strong> <span id="registrationDate">---</span></div>
-            <div class="info-item"><strong>Report Date:</strong> <span id="reportDate">---</span></div>
+            <div class="info-item"><span>Patient Name:</span> <span id="patientName">---</span></div>
+            <div class="info-item"><span>Sample ID:</span> <span id="sampleId">---</span></div>
+            <div class="info-item"><span>Age/Gender:</span> <span id="ageGender">---</span></div>
+            <div class="info-item"><span>Contact No:</span> <span id="contact">---</span></div>
+            <div class="info-item"><span>Referred By:</span> <span id="referredBy">---</span></div>
+            <div class="info-item"><span>Requested By:</span> <span id="requestedBy">---</span></div>
+            <div class="info-item"><span>Date of Collection:</span> <span id="collectionDate">---</span></div>
+            <div class="info-item"><span>Date of Registration:</span> <span id="registrationDate">---</span></div>
+            <div class="info-item"><span>Date of Reporting:</span> <span id="reportDate">---</span></div>
+        </div>
 
-            <div class="info-item payment-status-item">
-                <strong>Payment Status:</strong>
-                <select id="paymentStatusSelect" onchange="updatePatientPaymentStatus()">
+        <!-- Editable Subtest Table -->
+        <table class="subtest-table" id="reportSubtests">
+            <thead>
+                <tr>
+                    <th>Sub Test</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Chief Complaint</td>
+                    <td><input type="text" id="chiefComplaint" placeholder="Enter result"></td>
+                </tr>
+                <tr>
+                    <td>USG Findings</td>
+                    <td><input type="text" id="usgFindings" placeholder="Enter result"></td>
+                </tr>
+                <tr>
+                    <td>Gross</td>
+                    <td><input type="text" id="gross" placeholder="Enter result"></td>
+                </tr>
+                <tr>
+                    <td>Microscopy</td>
+                    <td><input type="text" id="microscopy" placeholder="Enter result"></td>
+                </tr>
+                <tr>
+                    <td>Impression</td>
+                    <td><input type="text" id="impression" placeholder="Enter result"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Report Footer -->
+        <div class="report-footer">
+            <label><strong>Report Checked By:</strong></label>
+            <div class="signature-box">
+                <select id="reportCheckedBy" onchange="toggleSignature()">
                     <option value="">-- Select --</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Due">Due</option>
+                    <option value="Alina Tiwari">Alina Tiwari</option>
                 </select>
+                <img id="signatureImage" src="Signature.jpg" alt="Signature">
             </div>
+            <p><strong>Consultant Pathologist</strong><br>NMC No: 23690</p>
         </div>
 
-        <div class="subtest-section">
-            <div class="subtest-header">
-                <h2>Test: <span id="testName">---</span></h2>
-                <button class="subtest-btn" onclick="toggleSubtest()">📝 Enter/Edit Sub Test Results</button>
-            </div>
-
-            <div id="subtestContainer">
-                <p>Fill in the required subtest results:</p>
-                <div class="subtest-row">
-                    <label for="chiefComplaint">Chief Complaint:</label>
-                    <input type="text" id="chiefComplaint" />
-                    <label for="chiefAbn">Abnormal</label>
-                    <input type="checkbox" id="chiefAbn" />
-                </div>
-                <div class="subtest-row">
-                    <label for="usgFindings">USG Findings:</label>
-                    <input type="text" id="usgFindings" />
-                    <label for="usgAbn">Abnormal</label>
-                    <input type="checkbox" id="usgAbn" />
-                </div>
-                <div class="subtest-row">
-                    <label for="gross">Gross:</label>
-                    <input type="text" id="gross" />
-                    <label for="grossAbn">Abnormal</label>
-                    <input type="checkbox" id="grossAbn" />
-                </div>
-                <div class="subtest-row">
-                    <label for="microscopy">Microscopy:</label>
-                    <input type="text" id="microscopy" />
-                    <label for="microAbn">Abnormal</label>
-                    <input type="checkbox" id="microAbn" />
-                </div>
-                <div class="subtest-row">
-                    <label for="impression">Impression:</label>
-                    <input type="text" id="impression" />
-                    <label for="impressionAbn">Abnormal</label>
-                    <input type="checkbox" id="impressionAbn" />
-                </div>
-                <div class="btn-row">
-                    <button class="btn-save" onclick="saveSubtest()">💾 Save Results</button>
-                    <button class="btn-close" onclick="toggleSubtest()">❌ Close</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="report-layout">
-            <div class="report-header-print">
-                <div>
-                    <p><strong>Sample ID:</strong> <span id="rSampleId">---</span></p>
-                    <p><strong>Patient:</strong> <span id="rName">---</span></p>
-                    <p><strong>Age/Gender:</strong> <span id="rAgeGender">---</span></p>
-                </div>
-                <div>
-                    <p><strong>Referred By:</strong> <span id="rReferred">---</span></p>
-                    <p><strong>Requested By:</strong> <span id="rRequested">---</span></p>
-                    <p><strong>Date Collected:</strong> <span id="rCollection">---</span></p>
-                    <p><strong>Date Reported:</strong> <span id="rReporting">---</span></p>
-                </div>
-            </div>
-
-            <table class="subtest-table" id="reportSubtests">
-                <thead>
-                    <tr>
-                        <th style="width: 30%;">Sub Test Description</th>
-                        <th>Result/Findings</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-
-            <div class="report-footer">
-
-                <div class="signature-box">
-                    <select id="reportCheckedBy" onchange="toggleSignature()">
-                        <option value="">-- Select Checker --</option>
-                        <option value="Dr. Alina Tiwari">Dr. Alina Tiwari</option>
-                    </select>
-
-                    <div style="position: relative;">
-                        <img id="signatureImage" src="Signature.jpg" alt="Signature" />
-                        <span class="signature-line"></span>
-                    </div>
-
-                    <p class="consultant-title" id="checkerName"></p>
-                    <p class="consultant-info">
-                        <strong>Consultant Pathologist</strong><br />NMC No: 23690
-                    </p>
-                </div>
-            </div>
+        <div class="btn-row">
+            <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print</button>
         </div>
     </div>
 
     <script>
-        // --- 2. PASTE YOUR FIREBASE CONFIGURATION HERE ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-kTFO-jZi3ztjJVcGSrExpf2tN4UdnZc",
-            authDomain: "cdrl-b6939.firebaseapp.com",
-            projectId: "cdrl-b6939",
-            storageBucket: "cdrl-b6939.firebasestorage.app",
-            messagingSenderId: "461637510863",
-            appId: "1:461637510863:web:24380b7b504554299239ba",
-        };
-
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-
-        // We still load the selected patient from local storage (set in Dashboard.html)
-        let selectedPatient = JSON.parse(localStorage.getItem("selectedPatient")) || {};
-
-        const subtestDefinitions = [
-            { id: 'chiefComplaint', name: 'Chief Complaint', abnId: 'chiefAbn' },
-            { id: 'usgFindings', name: 'USG Findings', abnId: 'usgAbn' },
-            { id: 'gross', name: 'Gross', abnId: 'grossAbn' },
-            { id: 'microscopy', name: 'Microscopy', abnId: 'microAbn' },
-            { id: 'impression', name: 'Impression', abnId: 'impressionAbn' },
-        ];
-
-
-        // --- REPORT INITIALIZATION AND POPULATION ---
-
-        /**
-         * Formats the date string from YYYY-MM-DD to DD Mon YYYY.
-         */
-        function formatDisplayDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            try {
-                const date = new Date(dateStr + 'T00:00:00');
-                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            } catch {
-                return dateStr;
-            }
-        }
-
-        /**
-         * Gets the current date formatted for the report.
-         */
-        function getCurrentReportDate() {
-            return new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        }
-
-        /**
-         * Populates the patient information into both the top grid and the final report layout.
-         */
-        function populateReportDetails() {
-            if (!selectedPatient || !selectedPatient.firstName) {
-                document.getElementById('mainHeading').textContent = "Patient Data Not Found";
-                return;
-            }
-
-            const fullName = [selectedPatient.firstName, selectedPatient.middleName, selectedPatient.lastName].filter(n => n).join(" ");
-            const ageGenderText = `${selectedPatient.age || "N/A"} / ${selectedPatient.sex || "N/A"}`;
-            const collectionDateText = formatDisplayDate(selectedPatient.date);
-            const sampleId = selectedPatient.sampleNumber || "N/A";
-            const reportDateText = getCurrentReportDate();
-
-            document.getElementById('pageTitle').textContent = `${fullName} - Lab Report`;
-
-            // --- Populating Patient Details (Top Grid) ---
-            document.getElementById("patientName").textContent = fullName;
-            document.getElementById("ageGender").textContent = ageGenderText;
-            document.getElementById("contact").textContent = selectedPatient.contact || "N/A";
-            document.getElementById("referredBy").textContent = selectedPatient.referredBy || "N/A";
-            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || "N/A";
-            document.getElementById("collectionDate").textContent = collectionDateText;
-            document.getElementById("registrationDate").textContent = collectionDateText;
-            document.getElementById("reportDate").textContent = reportDateText;
-            document.getElementById("sampleId").textContent = sampleId;
-            document.getElementById("testName").textContent = selectedPatient.testName || "N/A";
-
-            // Set Payment Status select value
-            const paymentSelect = document.getElementById("paymentStatusSelect");
-            paymentSelect.value = selectedPatient.paymentStatus || "";
-
-            // --- Populating Report Layout Section ---
-            document.getElementById("rSampleId").textContent = sampleId;
-            document.getElementById("rName").textContent = fullName;
-            document.getElementById("rAgeGender").textContent = ageGenderText;
-            document.getElementById("rReferred").textContent = selectedPatient.referredBy || "N/A";
-            document.getElementById("rRequested").textContent = selectedPatient.requestedBy || "N/A";
-            document.getElementById("rCollection").textContent = collectionDateText;
-            document.getElementById("rReporting").textContent = reportDateText;
-
-            // Load and render saved subtest data
-            loadSubtestDataToForm();
-            renderSubtestTable(selectedPatient.subtestData || {});
-        }
-
-        /**
-         * Renders the final subtest table in the report based on saved data.
-         */
-        function renderSubtestTable(subtestData) {
-            const tableBody = document.querySelector('#reportSubtests tbody');
-            tableBody.innerHTML = '';
-
-            for (const key in subtestData) {
-                const data = subtestData[key];
-                if (data && data.value) {
-                    const row = tableBody.insertRow();
-                    const cellName = row.insertCell(0);
-                    const cellResult = row.insertCell(1);
-
-                    cellName.textContent = key;
-
-                    if (data.isAbnormal) {
-                        cellResult.innerHTML = `<span class="abnormal-result">${data.value} (Abnormal)</span>`;
-                    } else {
-                        cellResult.textContent = data.value;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Loads saved subtest data into the input form for editing.
-         */
-        function loadSubtestDataToForm() {
-            const data = selectedPatient.subtestData || {};
-            subtestDefinitions.forEach(test => {
-                const savedData = data[test.name];
-                if (savedData) {
-                    document.getElementById(test.id).value = savedData.value || '';
-                    document.getElementById(test.abnId).checked = savedData.isAbnormal || false;
-                }
-            });
-        }
-
-
-        // --- INTERACTIVITY AND FIREBASE UPDATE FUNCTIONS ---
-
-        function toggleSubtest() {
-            const container = document.getElementById('subtestContainer');
-            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        // Load patient info from localStorage
+        const selectedPatient = JSON.parse(localStorage.getItem("selectedPatient"));
+        if (selectedPatient) {
+            document.getElementById("patientName").textContent =
+                `${selectedPatient.firstName} ${selectedPatient.middleName || ""} ${selectedPatient.lastName || ""}`;
+            document.getElementById("ageGender").textContent =
+                `${selectedPatient.age || "---"} / ${selectedPatient.sex || "---"}`;
+            document.getElementById("contact").textContent =
+                selectedPatient.contact && selectedPatient.contact.trim() !== "" ? selectedPatient.contact : "0000000000";
+            document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
+            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || "---";
+            document.getElementById("collectionDate").textContent = selectedPatient.date || "---";
+            document.getElementById("registrationDate").textContent = selectedPatient.date || "---";
+            document.getElementById("reportDate").textContent = selectedPatient.date || "---";
+            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || "---";
         }
 
         function toggleSignature() {
-            const selectElement = document.getElementById('reportCheckedBy');
-            const signatureImage = document.getElementById('signatureImage');
-            const checkerName = document.getElementById('checkerName');
-
-            if (selectElement.value) {
-                signatureImage.style.display = 'block';
-                checkerName.textContent = selectElement.value;
-            } else {
-                signatureImage.style.display = 'none';
-                checkerName.textContent = '';
-            }
+            const sel = document.getElementById("reportCheckedBy");
+            const img = document.getElementById("signatureImage");
+            img.style.display = sel.value ? "block" : "none";
         }
 
-        /**
-         * Saves the subtest data to Firebase.
-         */
-        function saveSubtest() {
-            let newSubtestData = {};
-            if (!selectedPatient.id) {
-                alert("Cannot save. Missing patient ID from database.");
-                return;
-            }
-
-            subtestDefinitions.forEach(test => {
-                const valueInput = document.getElementById(test.id);
-                const abnCheckbox = document.getElementById(test.abnId);
-
-                const resultValue = valueInput.value.trim();
-                const isAbnormal = abnCheckbox.checked;
-
-                if (resultValue) {
-                    newSubtestData[test.name] = {
-                        value: resultValue,
-                        isAbnormal: isAbnormal
-                    };
+        function prepareAndPrint() {
+            // Hide any empty subtest rows before printing
+            const rows = document.querySelectorAll("#reportSubtests tbody tr");
+            rows.forEach(row => {
+                const input = row.querySelector("input[type='text']");
+                if (!input.value.trim()) {
+                    row.style.display = "none";
+                } else {
+                    row.style.display = "table-row";
                 }
             });
 
-            // Update the data in Firebase
-            db.collection("patients").doc(selectedPatient.id).update({
-                subtestData: newSubtestData
-            }).then(() => {
-                // Update local object and UI
-                selectedPatient.subtestData = newSubtestData;
-                localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
-                renderSubtestTable(newSubtestData);
-                toggleSubtest();
-                alert("Subtest results saved to cloud and report updated!");
-            }).catch((error) => {
-                console.error("Error updating subtest data: ", error);
-                alert("Failed to save results to the cloud.");
-            });
+            window.print();
+
+            // Restore all rows after print
+            rows.forEach(row => row.style.display = "table-row");
         }
-
-        /**
-         * Updates the patient's payment status in Firebase.
-         */
-        function updatePatientPaymentStatus() {
-            const newStatus = document.getElementById('paymentStatusSelect').value;
-
-            if (!selectedPatient.id) {
-                alert("Cannot update payment status. Missing patient ID.");
-                return;
-            }
-
-            // Update the data in Firebase
-            db.collection("patients").doc(selectedPatient.id).update({
-                paymentStatus: newStatus
-            }).then(() => {
-                // Update local object
-                selectedPatient.paymentStatus = newStatus;
-                localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
-                alert(`Payment status updated to: ${newStatus}`);
-            }).catch((error) => {
-                console.error("Error updating payment status: ", error);
-                alert("Failed to update payment status in the cloud.");
-            });
-        }
-
-        // Run on load
-        document.addEventListener('DOMContentLoaded', populateReportDetails);
     </script>
 </body>
 
