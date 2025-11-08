@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <style>
-        /* ... (Keep all your existing CSS styles here, as they are correct) ... */
+        /* ... (Keep all your existing CSS styles here) ... */
         @page {
             size: A4;
             margin: 15mm;
@@ -365,7 +365,6 @@
             </div>
         </div>
 
-
         <div class="subtest-section">
             <div class="subtest-header">
                 <h2>Test: <span id="testName">---</span></h2>
@@ -438,7 +437,6 @@
             </table>
 
             <div class="report-footer">
-                <label><strong>Report Checked By:</strong></label>
 
                 <div class="signature-box">
                     <select id="reportCheckedBy" onchange="toggleSignature()">
@@ -447,7 +445,7 @@
                     </select>
 
                     <div style="position: relative;">
-                        <img id="signatureImage" src="signature.png" alt="Signature" />
+                        <img id="signatureImage" src="Signature.jpg" alt="Signature" />
                         <span class="signature-line"></span>
                     </div>
 
@@ -468,7 +466,7 @@
             projectId: "cdrl-b6939",
             storageBucket: "cdrl-b6939.firebasestorage.app",
             messagingSenderId: "461637510863",
-            appId: "1:461637510863:web:24380b7b504554299239ba"
+            appId: "1:461637510863:web:24380b7b504554299239ba",
         };
 
         // Initialize Firebase
@@ -478,7 +476,6 @@
         const db = firebase.firestore();
 
         // We still load the selected patient from local storage (set in Dashboard.html)
-        // This object now also contains the Firebase document 'id'
         let selectedPatient = JSON.parse(localStorage.getItem("selectedPatient")) || {};
 
         const subtestDefinitions = [

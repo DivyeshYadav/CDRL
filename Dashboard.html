@@ -395,6 +395,8 @@
                             <select id="sex" required>
                                 <option value="">--Select--</option>
                                 <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
 
@@ -468,7 +470,7 @@
             projectId: "cdrl-b6939",
             storageBucket: "cdrl-b6939.firebasestorage.app",
             messagingSenderId: "461637510863",
-            appId: "1:461637510863:web:24380b7b504554299239ba"
+            appId: "1:461637510863:web:24380b7b504554299239ba",
         };
 
         // Initialize Firebase
@@ -476,9 +478,9 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
-        let patients = []; // This will now store data fetched from Firebase
+        let patients = [];
 
-        // --- Global Counters (Now stored in LocalStorage as a fallback, ideally in a separate Firestore document) ---
+        // --- Global Counters (Stored in LocalStorage) ---
         let billCodeCounter = parseInt(localStorage.getItem("lastBillCode")) || 1000;
         let sampleNumberCounter = parseInt(localStorage.getItem("lastSampleNumber")) || 100;
 
@@ -509,7 +511,7 @@
         function logout() {
             if (confirm("Are you sure you want to log out?")) {
                 localStorage.removeItem("loggedInUser");
-                // window.location.href = "login.html"; // Uncomment if you have a login page
+                window.location.href = "Login.html";
             }
         }
 
@@ -522,7 +524,7 @@
             return 'S-' + sampleNumberCounter;
         }
 
-        // --- Core Data Handling Functions (UPDATED FOR FIREBASE) ---
+        // --- Core Data Handling Functions (FIREBASE) ---
 
         /**
          * Adds a new patient to the Firestore database.
@@ -545,19 +547,26 @@
                 date: document.getElementById("date").value,
                 paymentStatus: document.getElementById("paymentStatus").value,
                 testName: document.getElementById("testName").value,
-                billCode: generateBillCode(), // Uses incremented number
-                sampleNumber: generateSampleNumber(), // Uses incremented number
+                billCode: generateBillCode(),
+                sampleNumber: generateSampleNumber(),
                 subtestData: {},
-                createdAt: firebase.firestore.FieldValue.serverTimestamp() // Useful for sorting
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // SAVE TO FIREBASE INSTEAD OF LOCAL STORAGE
+            // SAVE TO FIREBASE 
             db.collection("patients").add(patient)
                 .then(() => {
-                    alert(`Patient ${patient.firstName} added successfully!`);
+
+                    // 1. Show confirmation message
+                    alert(`Patient ${patient.firstName} added successfully! Bill Code: ${patient.billCode}\n\nData saved to the cloud.`);
+
+                    // 2. Reset the form fields
                     document.getElementById('patientRegistrationForm').reset();
                     document.getElementById('contact').value = "0000000000";
+
+                    // 3. Redirect to the Report Entry List view
                     showReportEntry();
+
                 })
                 .catch((error) => {
                     console.error("Error adding document: ", error);
@@ -567,14 +576,12 @@
 
         /**
          * Listens to the Firestore database for real-time updates and renders the table.
-         * This function replaces the old 'renderPatients' and runs automatically when data changes.
          */
         function loadPatientsRealtime() {
-            // Real-time listener: data automatically updates when changed on ANY PC
             db.collection("patients").orderBy("createdAt", "desc").onSnapshot(snapshot => {
                 patients = [];
                 snapshot.forEach(doc => {
-                    // Store the Firebase document ID as 'id' for easy updating/deleting
+                    // Store the Firebase document ID as 'id' 
                     patients.push({ id: doc.id, ...doc.data() });
                 });
 
@@ -620,7 +627,7 @@
             if (confirm(`Are you sure you want to delete this patient?`)) {
                 db.collection("patients").doc(patientId).delete()
                     .then(() => {
-                        alert("Patient successfully deleted.");
+                        alert("Patient successfully deleted from the cloud.");
                     })
                     .catch((error) => {
                         console.error("Error removing document: ", error);
@@ -633,10 +640,9 @@
          * Saves the patient object to local storage and redirects to the details page.
          */
         function viewPatient(patientId) {
-            // Find the full patient object in the local 'patients' array using the Firebase ID
             const patientData = patients.find(p => p.id === patientId);
             if (patientData) {
-                // We still use localStorage temporarily to pass the data to patient_details.html
+                // Use localStorage temporarily to pass the data to patient_details.html
                 localStorage.setItem("selectedPatient", JSON.stringify(patientData));
                 window.location.href = "patient_details.html";
             } else {
