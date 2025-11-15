@@ -5,6 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Patient Details - Lab Report</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         @page {
             size: A4;
@@ -99,11 +101,27 @@
             margin-top: 5px;
         }
 
+        /* Top Buttons */
+        .top-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        /* Save Button */
+        .btn-save {
+            background: #28a745;
+        }
+
         .btn-row {
             text-align: right;
             margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
 
+        .top-buttons button,
         .btn-row button {
             padding: 6px 12px;
             border: none;
@@ -111,6 +129,7 @@
             cursor: pointer;
             font-size: 13px;
             color: white;
+            transition: background 0.2s;
         }
 
         .btn-print {
@@ -121,12 +140,22 @@
             background: #0056b3;
         }
 
+        .btn-back {
+            background: #6c757d;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+        }
+
+        /* Print Styles */
         @media print {
             body {
                 background: white;
             }
 
             .btn-row,
+            .top-buttons,
             select {
                 display: none !important;
             }
@@ -143,6 +172,12 @@
                 border: none;
             }
 
+            .print-result {
+                /* Ensures the printed text looks clean */
+                display: block;
+                padding: 4px 0;
+            }
+
             .signature-box img {
                 display: block;
             }
@@ -152,6 +187,11 @@
 
 <body>
     <div class="container">
+        <div class="top-buttons">
+            <button class="btn-back" onclick="goBack()">← Back to Dashboard</button>
+            <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print</button>
+        </div>
+
         <h1>Patient Details</h1>
 
         <div class="info-grid">
@@ -166,7 +206,6 @@
             <div class="info-item"><span>Date of Reporting:</span> <span id="reportDate">---</span></div>
         </div>
 
-        <!-- Editable Subtest Table -->
         <table class="subtest-table" id="reportSubtests">
             <thead>
                 <tr>
@@ -177,28 +216,35 @@
             <tbody>
                 <tr>
                     <td>Chief Complaint</td>
-                    <td><input type="text" id="chiefComplaint" placeholder="Enter result"></td>
+                    <td><input type="text" id="chiefComplaint" data-subtest-name="Chief Complaint"
+                            placeholder="Enter result"></td>
                 </tr>
                 <tr>
                     <td>USG Findings</td>
-                    <td><input type="text" id="usgFindings" placeholder="Enter result"></td>
+                    <td><input type="text" id="usgFindings" data-subtest-name="USG Findings" placeholder="Enter result">
+                    </td>
                 </tr>
                 <tr>
                     <td>Gross</td>
-                    <td><input type="text" id="gross" placeholder="Enter result"></td>
+                    <td><input type="text" id="gross" data-subtest-name="Gross" placeholder="Enter result"></td>
                 </tr>
                 <tr>
                     <td>Microscopy</td>
-                    <td><input type="text" id="microscopy" placeholder="Enter result"></td>
+                    <td><input type="text" id="microscopy" data-subtest-name="Microscopy" placeholder="Enter result">
+                    </td>
                 </tr>
                 <tr>
                     <td>Impression</td>
-                    <td><input type="text" id="impression" placeholder="Enter result"></td>
+                    <td><input type="text" id="impression" data-subtest-name="Impression" placeholder="Enter result">
+                    </td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Report Footer -->
+        <div class="btn-row">
+            <button class="btn-save" onclick="saveSubtest()">💾 Save Results</button>
+        </div>
+
         <div class="report-footer">
             <label><strong>Report Checked By:</strong></label>
             <div class="signature-box">
@@ -210,28 +256,90 @@
             </div>
             <p><strong>Consultant Pathologist</strong><br>NMC No: 23690</p>
         </div>
-
-        <div class="btn-row">
-            <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print</button>
-        </div>
     </div>
 
     <script>
-        // Load patient info from localStorage
-        const selectedPatient = JSON.parse(localStorage.getItem("selectedPatient"));
-        if (selectedPatient) {
-            document.getElementById("patientName").textContent =
-                `${selectedPatient.firstName} ${selectedPatient.middleName || ""} ${selectedPatient.lastName || ""}`;
-            document.getElementById("ageGender").textContent =
-                `${selectedPatient.age || "---"} / ${selectedPatient.sex || "---"}`;
-            document.getElementById("contact").textContent =
-                selectedPatient.contact && selectedPatient.contact.trim() !== "" ? selectedPatient.contact : "0000000000";
-            document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
-            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || "---";
-            document.getElementById("collectionDate").textContent = selectedPatient.date || "---";
-            document.getElementById("registrationDate").textContent = selectedPatient.date || "---";
-            document.getElementById("reportDate").textContent = selectedPatient.date || "---";
-            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || "---";
+        // --- Firebase Initialization ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        // --- End Firebase Initialization ---
+
+        const storedPatient = localStorage.getItem("selectedPatient");
+        let selectedPatient = storedPatient ? JSON.parse(storedPatient) : null;
+
+        function loadPatientData() {
+            if (!selectedPatient) {
+                alert("No patient selected! Redirecting to dashboard.");
+                goBack();
+                return;
+            }
+
+            const fullName = `${selectedPatient.firstName || ''} ${selectedPatient.middleName || ''} ${selectedPatient.lastName || ''}`.trim();
+
+            // Populate Info Grid
+            document.getElementById("patientName").textContent = fullName;
+            document.getElementById("ageGender").textContent = `${selectedPatient.age || '---'} / ${selectedPatient.sex || '---'}`;
+            document.getElementById("contact").textContent = selectedPatient.contact && selectedPatient.contact.trim() !== "" ? selectedPatient.contact : "0000000000";
+            document.getElementById("referredBy").textContent = selectedPatient.referredBy || '---';
+            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || '---';
+            document.getElementById("collectionDate").textContent = selectedPatient.date || '---';
+            document.getElementById("registrationDate").textContent = selectedPatient.date || '---';
+            document.getElementById("reportDate").textContent = selectedPatient.date || '---';
+            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || '---';
+
+            // Load existing subtest data into input fields
+            if (selectedPatient.subtestData) {
+                document.getElementById('chiefComplaint').value = selectedPatient.subtestData['Chief Complaint']?.value || '';
+                document.getElementById('usgFindings').value = selectedPatient.subtestData['USG Findings']?.value || '';
+                document.getElementById('gross').value = selectedPatient.subtestData['Gross']?.value || '';
+                document.getElementById('microscopy').value = selectedPatient.subtestData['Microscopy']?.value || '';
+                document.getElementById('impression').value = selectedPatient.subtestData['Impression']?.value || '';
+            }
+        }
+
+        function saveSubtest() {
+            if (!selectedPatient || !selectedPatient.id) {
+                alert("Cannot save: Missing patient ID. Please return to the dashboard and re-select the patient.");
+                return;
+            }
+
+            const newSubtestData = {};
+            const inputs = document.querySelectorAll('#reportSubtests input[type="text"]');
+
+            inputs.forEach(input => {
+                const subtestName = input.getAttribute('data-subtest-name');
+                const value = input.value.trim();
+
+                if (value !== "") {
+                    newSubtestData[subtestName] = { value: value };
+                }
+            });
+
+            // 1. Update Firestore
+            db.collection("patients").doc(selectedPatient.id).update({
+                subtestData: newSubtestData
+            })
+                .then(() => {
+                    alert("Report results saved successfully to the cloud!");
+
+                    // 2. Update local data and storage
+                    selectedPatient.subtestData = newSubtestData;
+                    localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
+                })
+                .catch(error => {
+                    console.error("Error updating document: ", error);
+                    alert("Failed to save data. Check console for details.");
+                });
         }
 
         function toggleSignature() {
@@ -240,24 +348,55 @@
             img.style.display = sel.value ? "block" : "none";
         }
 
+        // **CRUCIAL BACK NAVIGATION FIX:** Sets the flag for the dashboard to read
+        // In patient_details.html
+        function goBack() {
+            // This string 'reportEntry' MUST match the string used in dashboard.html
+            localStorage.setItem('dashboardView', 'reportEntry');
+            // This file name MUST be correct
+            window.location.href = "dashboard.html";
+         }
+
         function prepareAndPrint() {
-            // Hide any empty subtest rows before printing
-            const rows = document.querySelectorAll("#reportSubtests tbody tr");
-            rows.forEach(row => {
-                const input = row.querySelector("input[type='text']");
+            const inputs = document.querySelectorAll("#reportSubtests input[type='text']");
+
+            // 1. Store original cell content and hide empty rows
+            const originalContents = [];
+
+            inputs.forEach(input => {
+                const row = input.closest('tr');
+                // Store original HTML and display state
+                originalContents.push({ row, originalHTML: input.parentNode.innerHTML, originalDisplay: row.style.display });
+
                 if (!input.value.trim()) {
+                    // Hide the row if the input is empty for printing
                     row.style.display = "none";
                 } else {
-                    row.style.display = "table-row";
+                    // Replace input with static text for printing
+                    const resultCell = input.parentNode;
+                    const resultSpan = document.createElement('span');
+                    resultSpan.textContent = input.value;
+                    resultSpan.className = 'print-result';
+                    resultCell.innerHTML = ''; // Clear cell
+                    resultCell.appendChild(resultSpan);
+                    row.style.display = "table-row"; // Ensure non-empty rows are visible
                 }
             });
 
+            // 2. Print
             window.print();
 
-            // Restore all rows after print
-            rows.forEach(row => row.style.display = "table-row");
+            // 3. Restore the original input fields and row visibility after printing
+            originalContents.forEach(({ row, originalHTML, originalDisplay }) => {
+                row.querySelector('td:last-child').innerHTML = originalHTML;
+                row.style.display = originalDisplay;
+            });
+            // Re-run load to ensure any dynamically created inputs are attached to event handlers/reloaded
+            loadPatientData();
         }
-    </script>  
+
+        document.addEventListener('DOMContentLoaded', loadPatientData);
+    </script>
 </body>
 
 </html>

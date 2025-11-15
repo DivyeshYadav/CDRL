@@ -5,12 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Laboratory Dashboard</title>
-
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <style>
-        /* Define Blue and Orange Variables */
         :root {
             --primary-blue: #007bff;
             --dark-blue: #005691;
@@ -109,7 +106,6 @@
             border-color: var(--accent-orange);
         }
 
-        /* --- PROFESSIONAL FORM STYLES --- */
         #addPatientForm {
             background: var(--white);
             padding: 30px;
@@ -160,7 +156,6 @@
             outline: none;
         }
 
-        /* Full width for name fields */
         .name-fields {
             grid-column: 1 / 3;
             display: grid;
@@ -168,7 +163,6 @@
             gap: 20px;
         }
 
-        /* Submit Button */
         .form-action {
             grid-column: 1 / 3;
             margin-top: 20px;
@@ -190,7 +184,6 @@
             background: #218838;
         }
 
-        /* --- REPORT ENTRY TABLE STYLES --- */
         #reportEntry {
             background: var(--white);
             padding: 25px;
@@ -252,15 +245,13 @@
             background: #c82333;
         }
 
-        /* Patient Name link color */
-        #patientTable td:first-child {
-            color: var(--primary-blue) !important;
+        #patientTable td.patient-name-link {
+            color: #027fff !important;
             font-weight: bold;
-            cursor: pointer;
             text-decoration: underline;
+            cursor: pointer;
         }
 
-        /* Payment Status Badge */
         .status-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -336,34 +327,28 @@
 </head>
 
 <body>
-
     <header>🔬 Laboratory Dashboard</header>
-
     <div class="container">
         <div class="sidebar">
             <button onclick="showAddPatientForm()">➕ Add New Patient</button>
             <button onclick="showReportEntry()">📋 Report Entry List</button>
             <button onclick="logout()">🚪 Logout</button>
         </div>
-
         <div class="main">
             <div class="cards-container">
                 <div class="card" onclick="showAddPatientForm()">Patients: <br> <span id="totalPatients">0</span></div>
                 <div class="card" onclick="showReportEntry()">Paid: <br> <span id="paidPatients">0</span></div>
                 <div class="card" onclick="showReportEntry()">Due: <br> <span id="duePatients">0</span></div>
             </div>
-
-            <div id="addPatientForm" style="display:block;">
+            <div id="addPatientForm" style="display:none;">
                 <h2>Register New Patient</h2>
                 <form id="patientRegistrationForm">
                     <div class="form-grid">
-
                         <div class="form-group name-fields">
                             <input id="firstName" placeholder="First Name" required>
                             <input id="middleName" placeholder="Middle Name (Optional)">
                             <input id="lastName" placeholder="Last Name" required>
                         </div>
-
                         <div class="form-group">
                             <label for="requestedBy">Requested By (Clinic/Hospital): *</label>
                             <select id="requestedBy" required>
@@ -376,7 +361,6 @@
                                 <option>Nobel Hospital</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="referredBy">Referred By (Doctor): *</label>
                             <select id="referredBy" required>
@@ -389,7 +373,6 @@
                                 <option>Dr.Manoj Kumar Thakur</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="sex">Sex: *</label>
                             <select id="sex" required>
@@ -399,22 +382,18 @@
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="age">Age: *</label>
                             <input id="age" type="number" placeholder="Age (e.g., 35)" required>
                         </div>
-
                         <div class="form-group">
                             <label for="contact">Contact Number: *</label>
                             <input id="contact" type="tel" value="0000000000" placeholder="Contact Number" required>
                         </div>
-
                         <div class="form-group">
                             <label for="date">Collection Date: *</label>
                             <input id="date" type="date" required>
                         </div>
-
                         <div class="form-group">
                             <label for="paymentStatus">Payment Status: *</label>
                             <select id="paymentStatus" required>
@@ -423,22 +402,19 @@
                                 <option value="Due">Due</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="testName">Test Name: *</label>
                             <select id="testName" required>
                                 <option value="Medium Tissue Biopsy Test">Medium Tissue Biopsy Test</option>
                             </select>
                         </div>
-
                         <div class="form-action">
                             <button type="submit" class="submit-btn">✅ Add Patient</button>
                         </div>
                     </div>
                 </form>
             </div>
-
-            <div id="reportEntry" style="display:none;">
+            <div id="reportEntry" style="display:block;">
                 <h2>Report Entry List</h2>
                 <table>
                     <thead>
@@ -457,30 +433,23 @@
                     <tbody id="patientTable"></tbody>
                 </table>
             </div>
-
         </div>
     </div>
-
-
     <script>
-        // --- 2. PASTE YOUR FIREBASE CONFIGURATION HERE ---
+        // --- Firebase Configuration ---
         const firebaseConfig = {
-            apiKey: "AIzaSyC-kTFO-jZi3ztjJVcGSrExpf2tN4UdnZc",
-            authDomain: "cdrl-b6939.firebaseapp.com",
-            projectId: "cdrl-b6939",
-            storageBucket: "cdrl-b6939.firebasestorage.app",
-            messagingSenderId: "461637510863",
-            appId: "1:461637510863:web:24380b7b504554299239ba",
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
         };
-
-        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
         let patients = [];
-
-        // --- Global Counters (Stored in LocalStorage) ---
         let billCodeCounter = parseInt(localStorage.getItem("lastBillCode")) || 1000;
         let sampleNumberCounter = parseInt(localStorage.getItem("lastSampleNumber")) || 100;
 
@@ -489,7 +458,6 @@
             addPatient();
         });
 
-        // --- Dashboard Navigation & UI functions ---
         function updateCards() {
             const paid = patients.filter(p => p.paymentStatus === 'Paid').length;
             const due = patients.filter(p => p.paymentStatus === 'Due').length;
@@ -519,16 +487,12 @@
             localStorage.setItem("lastBillCode", ++billCodeCounter);
             return 'HP' + billCodeCounter;
         }
+
         function generateSampleNumber() {
             localStorage.setItem("lastSampleNumber", ++sampleNumberCounter);
             return 'S-' + sampleNumberCounter;
         }
 
-        // --- Core Data Handling Functions (FIREBASE) ---
-
-        /**
-         * Adds a new patient to the Firestore database.
-         */
         function addPatient() {
             if (!document.getElementById("firstName").value || !document.getElementById("lastName").value || !document.getElementById("requestedBy").value) {
                 alert("Please fill in all required fields.");
@@ -553,20 +517,12 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // SAVE TO FIREBASE 
             db.collection("patients").add(patient)
                 .then(() => {
-
-                    // 1. Show confirmation message
-                    alert(`Patient ${patient.firstName} added successfully! Bill Code: ${patient.billCode}\n\nData saved to the cloud.`);
-
-                    // 2. Reset the form fields
+                    alert(`Patient ${patient.firstName} added successfully! Bill Code: ${patient.billCode}`);
                     document.getElementById('patientRegistrationForm').reset();
                     document.getElementById('contact').value = "0000000000";
-
-                    // 3. Redirect to the Report Entry List view
                     showReportEntry();
-
                 })
                 .catch((error) => {
                     console.error("Error adding document: ", error);
@@ -574,18 +530,12 @@
                 });
         }
 
-        /**
-         * Listens to the Firestore database for real-time updates and renders the table.
-         */
         function loadPatientsRealtime() {
             db.collection("patients").orderBy("createdAt", "desc").onSnapshot(snapshot => {
                 patients = [];
                 snapshot.forEach(doc => {
-                    // Store the Firebase document ID as 'id' 
                     patients.push({ id: doc.id, ...doc.data() });
                 });
-
-                // Update UI elements
                 renderPatientTable(patients);
                 updateCards();
             }, error => {
@@ -593,20 +543,17 @@
             });
         }
 
-        /**
-         * Renders the patient list from the provided array.
-         */
         function renderPatientTable(patientList) {
             const table = document.getElementById("patientTable");
             table.innerHTML = "";
             const headers = ['Patient Name', 'Bill Code', 'Test Name', 'Age/Sex', 'Referred By', 'Date', 'Sample No.', 'Status', 'Action'];
-
             patientList.forEach((p, index) => {
                 const fullName = [p.firstName, p.middleName, p.lastName].filter(n => n).join(" ");
                 const statusClass = `status-${p.paymentStatus || 'Due'}`;
                 const row = document.createElement("tr");
+
                 row.innerHTML = `
-                    <td data-label="${headers[0]}" onclick="viewPatient('${p.id}')">${fullName}</td>
+                    <td data-label="${headers[0]}" class="patient-name-link" onclick="viewPatient('${p.id}')">${fullName}</td>
                     <td data-label="${headers[1]}">${p.billCode}</td>
                     <td data-label="${headers[2]}">${p.testName}</td>
                     <td data-label="${headers[3]}">${p.age} / ${p.sex}</td>
@@ -620,9 +567,6 @@
             });
         }
 
-        /**
-         * Deletes a patient from the Firebase database.
-         */
         function deletePatient(patientId) {
             if (confirm(`Are you sure you want to delete this patient?`)) {
                 db.collection("patients").doc(patientId).delete()
@@ -636,32 +580,32 @@
             }
         }
 
-        /**
-         * Saves the patient object to local storage and redirects to the details page.
-         */
         function viewPatient(patientId) {
             const patientData = patients.find(p => p.id === patientId);
             if (patientData) {
-                // Use localStorage temporarily to pass the data to patient_details.html
+                // Store the patient data (including the Firebase ID) for the next page
                 localStorage.setItem("selectedPatient", JSON.stringify(patientData));
-                window.location.href = "patient_details.html";
+                window.location.href = "patient_details.html"; // Navigate to the details page
             } else {
                 alert("Patient data not found!");
             }
         }
 
-
-        // Initialize display on load
         document.addEventListener('DOMContentLoaded', () => {
-            // Start listening for patient updates immediately
             loadPatientsRealtime();
-
-            // Ensure the contact input has the default value when the page loads
             document.getElementById('contact').value = "0000000000";
-            showReportEntry(); // Default to showing the list
+
+            // **CRUCIAL FOR BACK BUTTON LOGIC:** Check the flag set by patient_details.html
+            const dashboardView = localStorage.getItem('dashboardView');
+            if (dashboardView === 'reportEntry') {
+                showReportEntry(); // Show the Report Entry List
+                localStorage.removeItem('dashboardView'); // Clear the flag
+            } else {
+                // This determines the initial view if loaded directly
+                showReportEntry();
+            }
         });
     </script>
-
 </body>
 
 </html>
