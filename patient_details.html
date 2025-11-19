@@ -2,11 +2,9 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Patient Details - Lab Report</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Report Editor</title>
     <style>
         @page {
             size: A4;
@@ -15,171 +13,250 @@
 
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
             background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
         }
 
         .container {
-            max-width: 800px;
-            margin: 30px auto;
+            max-width: 900px;
+            margin: auto;
             background: #fff;
             padding: 25px 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            position: relative;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 22px;
-            color: #007bff;
+            margin-bottom: 25px;
+            font-size: 24px;
+            color: #1a73e8;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
         }
 
         .info-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px 20px;
-            margin-bottom: 20px;
-            font-size: 13px;
+            gap: 12px 25px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 3px;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dotted #ccc;
         }
 
-        .info-item span {
+        .info-item span:first-child {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .info-item span:last-child {
             font-weight: bold;
+            color: #333;
         }
 
         .subtest-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .subtest-table th,
         .subtest-table td {
-            border: 1px solid #999;
-            padding: 6px;
+            border: 1px solid #dcdcdc;
+            padding: 8px;
+            vertical-align: top;
         }
 
         .subtest-table th {
-            background-color: #f0f0f0;
+            background: #eaf1fb;
+            font-weight: bold;
+            text-align: left;
         }
 
-        input[type="text"] {
+        .subtest-name-cell {
+            font-weight: 600;
+            background: #f7f9fc;
+            cursor: text;
+        }
+
+        .subtest-name-cell:focus {
+            outline: 2px solid #1a73e8;
+            background: #fff;
+        }
+
+        .edit-area {
             width: 100%;
             border: none;
             padding: 4px;
-            font-size: 13px;
+            font-size: 14px;
             outline: none;
+            resize: vertical;
+            min-height: 40px;
+            background: #fff;
         }
 
-        /* Footer section */
-        .report-footer {
-            margin-top: 30px;
-            font-size: 13px;
-            border: 1px solid #999;
-            border-radius: 6px;
-            padding: 10px;
-        }
-
-        .report-footer select {
-            padding: 3px 6px;
-            font-size: 13px;
-            margin-top: 4px;
-        }
-
-        .signature-box img {
-            width: 80px;
+        .print-result {
             display: none;
-            margin-top: 5px;
         }
 
-        /* Top Buttons */
+        .btn-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-add-row {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-print {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .message-box {
+            background: #ffc107;
+            color: #333;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+
         .top-buttons {
             display: flex;
             justify-content: space-between;
             margin-bottom: 15px;
         }
 
-        /* Save Button */
-        .btn-save {
-            background: #28a745;
+        /* ✅ Updated Footer Styling */
+        .report-footer {
+            margin-top: 30px;
+            font-size: 14px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
         }
 
-        .btn-row {
-            text-align: right;
-            margin-top: 15px;
+        .footer-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .signature-block {
             display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .signature-label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .signature-content {
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
             justify-content: flex-end;
-            gap: 10px;
         }
 
-        .top-buttons button,
-        .btn-row button {
-            padding: 6px 12px;
-            border: none;
+        .signature-content select {
+            padding: 5px 10px;
+            font-size: 14px;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            color: white;
-            transition: background 0.2s;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            width: 100%;
+            max-width: 200px;
         }
 
-        .btn-print {
-            background: #007bff;
+        .signature-content img {
+            width: 120px;
+            max-height: 40px;
+            object-fit: contain;
+            display: none;
         }
 
-        .btn-print:hover {
-            background: #0056b3;
-        }
-
-        .btn-back {
-            background: #6c757d;
-        }
-
-        .btn-back:hover {
-            background: #5a6268;
-        }
-
-        /* Print Styles */
+        /* Print styles */
         @media print {
             body {
                 background: white;
+                padding: 0;
             }
 
             .btn-row,
             .top-buttons,
-            select {
+            .edit-area,
+            .signature-content select {
                 display: none !important;
             }
 
-            .container {
-                border: none;
-                box-shadow: none;
-                margin: 0;
-                width: 100%;
-                padding: 0;
-            }
-
-            input[type="text"] {
-                border: none;
-            }
-
             .print-result {
-                /* Ensures the printed text looks clean */
-                display: block;
+                display: block !important;
+                white-space: pre-wrap;
+                font-size: 14px;
                 padding: 4px 0;
+                margin: 0;
+                min-height: 1.4em;
             }
 
-            .signature-box img {
-                display: block;
+            .subtest-table tr:has(.print-result:empty) {
+                display: none;
+            }
+
+            .subtest-table td {
+                border-color: #555 !important;
+            }
+
+            .signature-content img {
+                display: block !important;
+            }
+
+            /* Ensure both signatures appear left-aligned in print */
+            .footer-signatures {
+                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
@@ -187,215 +264,230 @@
 
 <body>
     <div class="container">
+        <div id="messageBox" class="message-box"></div>
         <div class="top-buttons">
-            <button class="btn-back" onclick="goBack()">← Back to Dashboard</button>
-            <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print</button>
+            <button class="btn-back" onclick="goToDashboard()">← Back to Dashboard</button>
+            <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print Report</button>
         </div>
 
-        <h1>Patient Details</h1>
+        <h1>Patient Report Editor</h1>
 
         <div class="info-grid">
-            <div class="info-item"><span>Patient Name:</span> <span id="patientName">---</span></div>
-            <div class="info-item"><span>Sample ID:</span> <span id="sampleId">---</span></div>
-            <div class="info-item"><span>Age/Gender:</span> <span id="ageGender">---</span></div>
-            <div class="info-item"><span>Contact No:</span> <span id="contact">---</span></div>
-            <div class="info-item"><span>Referred By:</span> <span id="referredBy">---</span></div>
-            <div class="info-item"><span>Requested By:</span> <span id="requestedBy">---</span></div>
-            <div class="info-item"><span>Date of Collection:</span> <span id="collectionDate">---</span></div>
-            <div class="info-item"><span>Date of Registration:</span> <span id="registrationDate">---</span></div>
-            <div class="info-item"><span>Date of Reporting:</span> <span id="reportDate">---</span></div>
+            <div class="info-item"><span>Patient Name:</span><span id="patientName">---</span></div>
+            <div class="info-item"><span>Sample ID:</span><span id="sampleId">---</span></div>
+            <div class="info-item"><span>Age/Gender:</span><span id="ageGender">---</span></div>
+            <div class="info-item"><span>Contact No:</span><span id="contact">---</span></div>
+            <div class="info-item"><span>Referred By:</span><span id="referredBy">---</span></div>
+            <div class="info-item"><span>Test Name:</span><span id="testName">---</span></div>
+            <div class="info-item"><span>Collection Date:</span><span id="collectionDate">---</span></div>
+            <div class="info-item"><span>Report Date:</span><span id="reportDate">---</span></div>
         </div>
 
-        <table class="subtest-table" id="reportSubtests">
+        <table class="subtest-table">
             <thead>
                 <tr>
                     <th>Sub Test</th>
-                    <th>Result</th>
+                    <th>Result/Finding</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>Chief Complaint</td>
-                    <td><input type="text" id="chiefComplaint" data-subtest-name="Chief Complaint"
-                            placeholder="Enter result"></td>
-                </tr>
-                <tr>
-                    <td>USG Findings</td>
-                    <td><input type="text" id="usgFindings" data-subtest-name="USG Findings" placeholder="Enter result">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Gross</td>
-                    <td><input type="text" id="gross" data-subtest-name="Gross" placeholder="Enter result"></td>
-                </tr>
-                <tr>
-                    <td>Microscopy</td>
-                    <td><input type="text" id="microscopy" data-subtest-name="Microscopy" placeholder="Enter result">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Impression</td>
-                    <td><input type="text" id="impression" data-subtest-name="Impression" placeholder="Enter result">
-                    </td>
-                </tr>
-            </tbody>
+            <tbody id="subtestBody"></tbody>
         </table>
 
         <div class="btn-row">
-            <button class="btn-save" onclick="saveSubtest()">💾 Save Results</button>
+            <button class="btn-add-row" onclick="addRow()">+ Add New Row</button>
+            <button class="btn-save" onclick="saveReport()">💾 Save Report</button>
         </div>
 
+        <!-- ✅ Updated Footer -->
         <div class="report-footer">
-            <label><strong>Report Checked By:</strong></label>
-            <div class="signature-box">
-                <select id="reportCheckedBy" onchange="toggleSignature()">
-                    <option value="">-- Select --</option>
-                    <option value="Alina Tiwari">Alina Tiwari</option>
-                </select>
-                <img id="signatureImage" src="Signature.jpg" alt="Signature">
+            <div class="footer-signatures">
+                <div class="signature-block">
+                    <div class="signature-label">
+                        <div class="signature-label">Report Checked By</div>
+                        <div class="signature-content">
+                            <select id="reportCheckedBy" onchange="toggleSignature()">
+                                <option value="">-- Select Doctor --</option>
+                                <option value="Dr. Alina Tiwari">Dr. Alina Tiwari</option>
+                            </select>
+                            <img id="signatureImage" src="Signature.jpg" alt="Signature">
+                        </div>
+                        <div class="signature-content">
+                            <div>Dr. Alina Tiwari</div>
+                            <div>Consultant Pathalogist</div>
+                            <div>NMC No: 23690</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p><strong>Consultant Pathologist</strong><br>NMC No: 23690</p>
         </div>
     </div>
 
     <script>
-        // --- Firebase Initialization ---
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-        };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-        // --- End Firebase Initialization ---
+        let selectedPatient = null;
+        let patientId = null;
 
-        const storedPatient = localStorage.getItem("selectedPatient");
-        let selectedPatient = storedPatient ? JSON.parse(storedPatient) : null;
-
-        function loadPatientData() {
-            if (!selectedPatient) {
-                alert("No patient selected! Redirecting to dashboard.");
-                goBack();
-                return;
-            }
-
-            const fullName = `${selectedPatient.firstName || ''} ${selectedPatient.middleName || ''} ${selectedPatient.lastName || ''}`.trim();
-
-            // Populate Info Grid
-            document.getElementById("patientName").textContent = fullName;
-            document.getElementById("ageGender").textContent = `${selectedPatient.age || '---'} / ${selectedPatient.sex || '---'}`;
-            document.getElementById("contact").textContent = selectedPatient.contact && selectedPatient.contact.trim() !== "" ? selectedPatient.contact : "0000000000";
-            document.getElementById("referredBy").textContent = selectedPatient.referredBy || '---';
-            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || '---';
-            document.getElementById("collectionDate").textContent = selectedPatient.date || '---';
-            document.getElementById("registrationDate").textContent = selectedPatient.date || '---';
-            document.getElementById("reportDate").textContent = selectedPatient.date || '---';
-            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || '---';
-
-            // Load existing subtest data into input fields
-            if (selectedPatient.subtestData) {
-                document.getElementById('chiefComplaint').value = selectedPatient.subtestData['Chief Complaint']?.value || '';
-                document.getElementById('usgFindings').value = selectedPatient.subtestData['USG Findings']?.value || '';
-                document.getElementById('gross').value = selectedPatient.subtestData['Gross']?.value || '';
-                document.getElementById('microscopy').value = selectedPatient.subtestData['Microscopy']?.value || '';
-                document.getElementById('impression').value = selectedPatient.subtestData['Impression']?.value || '';
-            }
+        function displayMessage(msg) {
+            const box = document.getElementById('messageBox');
+            box.textContent = msg;
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 4000);
         }
 
-        function saveSubtest() {
-            if (!selectedPatient || !selectedPatient.id) {
-                alert("Cannot save: Missing patient ID. Please return to the dashboard and re-select the patient.");
-                return;
-            }
-
-            const newSubtestData = {};
-            const inputs = document.querySelectorAll('#reportSubtests input[type="text"]');
-
-            inputs.forEach(input => {
-                const subtestName = input.getAttribute('data-subtest-name');
-                const value = input.value.trim();
-
-                if (value !== "") {
-                    newSubtestData[subtestName] = { value: value };
-                }
-            });
-
-            // 1. Update Firestore
-            db.collection("patients").doc(selectedPatient.id).update({
-                subtestData: newSubtestData
-            })
-                .then(() => {
-                    alert("Report results saved successfully to the cloud!");
-
-                    // 2. Update local data and storage
-                    selectedPatient.subtestData = newSubtestData;
-                    localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
-                })
-                .catch(error => {
-                    console.error("Error updating document: ", error);
-                    alert("Failed to save data. Check console for details.");
-                });
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
         }
 
         function toggleSignature() {
-            const sel = document.getElementById("reportCheckedBy");
-            const img = document.getElementById("signatureImage");
-            img.style.display = sel.value ? "block" : "none";
+            const doctor = document.getElementById("reportCheckedBy").value;
+            document.getElementById("signatureImage").style.display = doctor ? "block" : "none";
         }
 
-        // **CRUCIAL BACK NAVIGATION FIX:** Sets the flag for the dashboard to read
-        // In patient_details.html
-        function goBack() {
-            // This string 'reportEntry' MUST match the string used in dashboard.html
-            localStorage.setItem('dashboardView', 'reportEntry');
-            // This file name MUST be correct
-            window.location.href = "dashboard.html";
-         }
+        function addRow(name = "New Sub Test", value = "") {
+            const tbody = document.getElementById('subtestBody');
+            const row = tbody.insertRow();
 
-        function prepareAndPrint() {
-            const inputs = document.querySelectorAll("#reportSubtests input[type='text']");
+            const nameCell = row.insertCell();
+            nameCell.className = 'subtest-name-cell';
+            nameCell.contentEditable = true;
+            nameCell.textContent = name;
 
-            // 1. Store original cell content and hide empty rows
-            const originalContents = [];
+            const resultCell = row.insertCell();
+            resultCell.innerHTML = `
+                <textarea class="edit-area" placeholder="Enter result">${value}</textarea>
+                <div class="print-result">${value}</div>
+            `;
+        }
 
-            inputs.forEach(input => {
-                const row = input.closest('tr');
-                // Store original HTML and display state
-                originalContents.push({ row, originalHTML: input.parentNode.innerHTML, originalDisplay: row.style.display });
+        function syncPrintViews() {
+            document.querySelectorAll('#subtestBody tr').forEach(row => {
+                const textarea = row.querySelector('.edit-area');
+                const printDiv = row.querySelector('.print-result');
+                if (textarea && printDiv) {
+                    printDiv.textContent = textarea.value;
+                }
+            });
+        }
 
-                if (!input.value.trim()) {
-                    // Hide the row if the input is empty for printing
-                    row.style.display = "none";
-                } else {
-                    // Replace input with static text for printing
-                    const resultCell = input.parentNode;
-                    const resultSpan = document.createElement('span');
-                    resultSpan.textContent = input.value;
-                    resultSpan.className = 'print-result';
-                    resultCell.innerHTML = ''; // Clear cell
-                    resultCell.appendChild(resultSpan);
-                    row.style.display = "table-row"; // Ensure non-empty rows are visible
+        function saveReport() {
+            syncPrintViews();
+
+            const rows = document.querySelectorAll("#subtestBody tr");
+            const subtests = {};
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.trim();
+                const value = row.querySelector('.edit-area').value.trim();
+                if (name) {
+                    subtests[name] = { value };
                 }
             });
 
-            // 2. Print
-            window.print();
+            const checkedBy = document.getElementById('reportCheckedBy').value;
+            const reportDate = new Date().toISOString().split('T')[0];
 
-            // 3. Restore the original input fields and row visibility after printing
-            originalContents.forEach(({ row, originalHTML, originalDisplay }) => {
-                row.querySelector('td:last-child').innerHTML = originalHTML;
-                row.style.display = originalDisplay;
-            });
-            // Re-run load to ensure any dynamically created inputs are attached to event handlers/reloaded
-            loadPatientData();
+            // Save to localStorage using patientId as key
+            if (patientId) {
+                localStorage.setItem(`subtests_${patientId}`, JSON.stringify(subtests));
+                localStorage.setItem(`checkedBy_${patientId}`, checkedBy);
+                localStorage.setItem(`reportDate_${patientId}`, reportDate);
+
+                // Also update the main patient object
+                selectedPatient = {
+                    ...selectedPatient,
+                    subtestData: subtests,
+                    checkedBy,
+                    reportDate
+                };
+                localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
+
+                displayMessage("Report saved successfully!");
+            } else {
+                displayMessage("Error: No patient ID found for saving");
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', loadPatientData);
+        function prepareAndPrint() {
+            syncPrintViews();
+
+            const hasContent = Array.from(document.querySelectorAll('.print-result'))
+                .some(div => div.textContent.trim() !== '');
+
+            if (!hasContent) {
+                displayMessage("⚠️ No results entered. Nothing to print.");
+                return;
+            }
+
+            window.print();
+        }
+
+        function loadPatient() {
+            const stored = localStorage.getItem("selectedPatient");
+            selectedPatient = stored ? JSON.parse(stored) : {
+                firstName: "John",
+                lastName: "Doe",
+                age: "30",
+                sex: "Male",
+                contact: "",
+                referredBy: "",
+                testName: "",
+                sampleNumber: "S-001",
+                dateCollected: "2025-11-10",
+                reportDate: "2025-11-17",
+                subtestData: {
+                    "Chief Complaint": { value: "" },
+                    "USG Findings": { value: "" },
+                    "Gross": { value: "" },
+                    "Microscopy": { value: "" },
+                    "Impression": { value: "" }
+                }
+            };
+
+            // Get patient ID from sample number or create a fallback
+            patientId = selectedPatient.sampleNumber || selectedPatient.id || 'default';
+
+            // Load subtests from localStorage if available
+            const storedSubtests = localStorage.getItem(`subtests_${patientId}`);
+            const storedCheckedBy = localStorage.getItem(`checkedBy_${patientId}`);
+            const storedReportDate = localStorage.getItem(`reportDate_${patientId}`);
+
+            if (storedSubtests) {
+                selectedPatient.subtestData = JSON.parse(storedSubtests);
+            }
+            if (storedCheckedBy) {
+                selectedPatient.checkedBy = storedCheckedBy;
+            }
+            if (storedReportDate) {
+                selectedPatient.reportDate = storedReportDate;
+            }
+
+            document.getElementById("patientName").textContent = `${selectedPatient.firstName} ${selectedPatient.lastName}`;
+            document.getElementById("ageGender").textContent = `${selectedPatient.age} / ${selectedPatient.sex}`;
+            document.getElementById("contact").textContent = selectedPatient.contact || "---";
+            document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
+            document.getElementById("testName").textContent = selectedPatient.testName || "---";
+            document.getElementById("collectionDate").textContent = selectedPatient.dateCollected || "---";
+            document.getElementById("reportDate").textContent = selectedPatient.reportDate || "---";
+            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || "---";
+            document.getElementById("reportCheckedBy").value = selectedPatient.checkedBy || "";
+            toggleSignature();
+
+            const tbody = document.getElementById('subtestBody');
+            tbody.innerHTML = '';
+            const subtests = selectedPatient.subtestData || {};
+            for (const [name, data] of Object.entries(subtests)) {
+                addRow(name, data.value || "");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPatient();
+
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('edit-area')) {
+                    const printDiv = e.target.parentElement.querySelector('.print-result');
+                    if (printDiv) printDiv.textContent = e.target.value;
+                }
+            });
+        });
     </script>
 </body>
 

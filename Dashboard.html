@@ -12,7 +12,6 @@
             --primary-blue: #007bff;
             --dark-blue: #005691;
             --accent-orange: #ff8c00;
-            --soft-orange: #ffe6c7;
             --error-red: #dc3545;
             --success-green: #28a745;
             --light-bg: #f8f9fa;
@@ -438,12 +437,13 @@
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
+            // NOTE: Replace these with your actual Firebase project details
+            apiKey: "AIzaSyC-kTFO-jZi3ztjJVcGSrExpf2tN4UdnZc",
+            authDomain: "cdrl-b6939.firebaseapp.com",
+            projectId: "cdrl-b6939",
+            storageBucket: "cdrl-b6939.firebasestorage.app",
+            messagingSenderId: "461637510863",
+            appId: "1:461637510863:web:24380b7b504554299239ba"
         };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -595,13 +595,13 @@
             loadPatientsRealtime();
             document.getElementById('contact').value = "0000000000";
 
-            // **CRUCIAL FOR BACK BUTTON LOGIC:** Check the flag set by patient_details.html
+            // **FIX: Logic to ensure Report Entry is shown when navigating back**
             const dashboardView = localStorage.getItem('dashboardView');
             if (dashboardView === 'reportEntry') {
                 showReportEntry(); // Show the Report Entry List
-                localStorage.removeItem('dashboardView'); // Clear the flag
+                localStorage.removeItem('dashboardView'); // Clear the flag after use
             } else {
-                // This determines the initial view if loaded directly
+                // Default view if loaded directly
                 showReportEntry();
             }
         });
