@@ -348,9 +348,11 @@
                             <input id="middleName" placeholder="Middle Name (Optional)">
                             <input id="lastName" placeholder="Last Name" required>
                         </div>
+
+                        <!-- Requested By: dropdown + manual input -->
                         <div class="form-group">
                             <label for="requestedBy">Requested By (Clinic/Hospital): *</label>
-                            <select id="requestedBy" required>
+                            <select id="requestedBySelect" onchange="syncRequestedBy()">
                                 <option value="">--Select--</option>
                                 <option>BGH Polyclinic</option>
                                 <option>HandC Polyclinic</option>
@@ -359,10 +361,13 @@
                                 <option>Janta Polyclinic</option>
                                 <option>Nobel Hospital</option>
                             </select>
+                            <input id="requestedBy" placeholder="Or type clinic/hospital here" required>
                         </div>
+
+                        <!-- Referred By: dropdown + manual input -->
                         <div class="form-group">
                             <label for="referredBy">Referred By (Doctor): *</label>
-                            <select id="referredBy" required>
+                            <select id="referredBySelect" onchange="syncReferredBy()">
                                 <option value="">--Select--</option>
                                 <option>Self</option>
                                 <option>Dr.Roshan Yadav</option>
@@ -371,7 +376,9 @@
                                 <option>Dr.Biva Mandal</option>
                                 <option>Dr.Manoj Kumar Thakur</option>
                             </select>
+                            <input id="referredBy" placeholder="Or type doctor name here" required>
                         </div>
+
                         <div class="form-group">
                             <label for="sex">Sex: *</label>
                             <select id="sex" required>
@@ -407,6 +414,7 @@
                                 <option value="Medium Tissue Biopsy Test">Medium Tissue Biopsy Test</option>
                             </select>
                         </div>
+
                         <div class="form-action">
                             <button type="submit" class="submit-btn">✅ Add Patient</button>
                         </div>
@@ -437,7 +445,7 @@
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
-            // NOTE: Replace these with your actual Firebase project details
+            // NOTE: Replace these with your actual Firebase project details if needed
             apiKey: "AIzaSyC-kTFO-jZi3ztjJVcGSrExpf2tN4UdnZc",
             authDomain: "cdrl-b6939.firebaseapp.com",
             projectId: "cdrl-b6939",
@@ -449,10 +457,13 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
+
+        // Local counters
         let patients = [];
         let billCodeCounter = parseInt(localStorage.getItem("lastBillCode")) || 1000;
         let sampleNumberCounter = parseInt(localStorage.getItem("lastSampleNumber")) || 100;
 
+        // Form submit
         document.getElementById('patientRegistrationForm').addEventListener('submit', function (event) {
             event.preventDefault();
             addPatient();
@@ -493,8 +504,27 @@
             return 'S-' + sampleNumberCounter;
         }
 
+        // Sync dropdown -> input for Requested By
+        function syncRequestedBy() {
+            const selected = document.getElementById("requestedBySelect").value;
+            if (selected !== "") {
+                document.getElementById("requestedBy").value = selected;
+            }
+        }
+
+        // Sync dropdown -> input for Referred By
+        function syncReferredBy() {
+            const selected = document.getElementById("referredBySelect").value;
+            if (selected !== "") {
+                document.getElementById("referredBy").value = selected;
+            }
+        }
+
         function addPatient() {
-            if (!document.getElementById("firstName").value || !document.getElementById("lastName").value || !document.getElementById("requestedBy").value) {
+            // Basic required validation
+            if (!document.getElementById("firstName").value.trim() ||
+                !document.getElementById("lastName").value.trim() ||
+                !document.getElementById("requestedBy").value.trim()) {
                 alert("Please fill in all required fields.");
                 return;
             }
@@ -503,8 +533,8 @@
                 firstName: document.getElementById("firstName").value.trim(),
                 middleName: document.getElementById("middleName").value.trim(),
                 lastName: document.getElementById("lastName").value.trim(),
-                requestedBy: document.getElementById("requestedBy").value,
-                referredBy: document.getElementById("referredBy").value,
+                requestedBy: document.getElementById("requestedBy").value.trim(),
+                referredBy: document.getElementById("referredBy").value.trim(),
                 sex: document.getElementById("sex").value,
                 age: document.getElementById("age").value,
                 contact: document.getElementById("contact").value,
@@ -522,6 +552,9 @@
                     alert(`Patient ${patient.firstName} added successfully! Bill Code: ${patient.billCode}`);
                     document.getElementById('patientRegistrationForm').reset();
                     document.getElementById('contact').value = "0000000000";
+                    // Clear selects (they may have values)
+                    document.getElementById('requestedBySelect').value = "";
+                    document.getElementById('referredBySelect').value = "";
                     showReportEntry();
                 })
                 .catch((error) => {
@@ -552,15 +585,21 @@
                 const statusClass = `status-${p.paymentStatus || 'Due'}`;
                 const row = document.createElement("tr");
 
+                // Escape function to avoid HTML injection
+                function esc(text) {
+                    if (text === undefined || text === null) return '';
+                    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+
                 row.innerHTML = `
-                    <td data-label="${headers[0]}" class="patient-name-link" onclick="viewPatient('${p.id}')">${fullName}</td>
-                    <td data-label="${headers[1]}">${p.billCode}</td>
-                    <td data-label="${headers[2]}">${p.testName}</td>
-                    <td data-label="${headers[3]}">${p.age} / ${p.sex}</td>
-                    <td data-label="${headers[4]}">${p.referredBy}</td>
-                    <td data-label="${headers[5]}">${p.date}</td>
-                    <td data-label="${headers[6]}">${p.sampleNumber}</td>
-                    <td data-label="${headers[7]}"><span class="status-badge ${statusClass}">${p.paymentStatus}</span></td>
+                    <td data-label="${headers[0]}" class="patient-name-link" onclick="viewPatient('${p.id}')">${esc(fullName)}</td>
+                    <td data-label="${headers[1]}">${esc(p.billCode)}</td>
+                    <td data-label="${headers[2]}">${esc(p.testName)}</td>
+                    <td data-label="${headers[3]}">${esc(p.age)} / ${esc(p.sex)}</td>
+                    <td data-label="${headers[4]}">${esc(p.referredBy)}</td>
+                    <td data-label="${headers[5]}">${esc(p.date)}</td>
+                    <td data-label="${headers[6]}">${esc(p.sampleNumber)}</td>
+                    <td data-label="${headers[7]}"><span class="status-badge ${statusClass}">${esc(p.paymentStatus)}</span></td>
                     <td data-label="${headers[8]}"><button class="delete-btn" onclick="deletePatient('${p.id}')">🗑️</button></td>
                 `;
                 table.appendChild(row);
@@ -585,6 +624,8 @@
             if (patientData) {
                 // Store the patient data (including the Firebase ID) for the next page
                 localStorage.setItem("selectedPatient", JSON.stringify(patientData));
+                // When returning to dashboard we want report list shown
+                localStorage.setItem('dashboardView', 'reportEntry');
                 window.location.href = "patient_details.html"; // Navigate to the details page
             } else {
                 alert("Patient data not found!");
@@ -595,13 +636,12 @@
             loadPatientsRealtime();
             document.getElementById('contact').value = "0000000000";
 
-            // **FIX: Logic to ensure Report Entry is shown when navigating back**
+            // Show Report Entry by default or preserve previous view
             const dashboardView = localStorage.getItem('dashboardView');
             if (dashboardView === 'reportEntry') {
-                showReportEntry(); // Show the Report Entry List
-                localStorage.removeItem('dashboardView'); // Clear the flag after use
+                showReportEntry();
+                localStorage.removeItem('dashboardView');
             } else {
-                // Default view if loaded directly
                 showReportEntry();
             }
         });

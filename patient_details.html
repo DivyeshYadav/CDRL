@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Report Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @page {
             size: A4;
@@ -34,6 +36,16 @@
             color: #1a73e8;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
+        }
+
+        .histopathalogy-header {
+            text-align: center;
+            margin: 20px 0 15px 0;
+            font-size: 18px;
+            color: #1a73e8;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+            font-weight: bold;
         }
 
         .info-grid {
@@ -145,6 +157,15 @@
             cursor: pointer;
         }
 
+        .btn-download {
+            background: #6f42c1;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
         .btn-back {
             background: #6c757d;
             color: white;
@@ -226,6 +247,21 @@
                 padding: 0;
             }
 
+            @page {
+                margin-top: 30mm;
+                /* Add top margin for printed page */
+            }
+
+            .container {
+                max-width: none;
+                width: 100%;
+                margin: 0;
+                padding: 15px;
+                box-shadow: none;
+                border: none;
+                margin-top: 20mm !important;
+            }
+
             .btn-row,
             .top-buttons,
             .edit-area,
@@ -254,7 +290,6 @@
                 display: block !important;
             }
 
-            /* Ensure both signatures appear left-aligned in print */
             .footer-signatures {
                 grid-template-columns: 1fr 1fr;
             }
@@ -283,6 +318,8 @@
             <div class="info-item"><span>Report Date:</span><span id="reportDate">---</span></div>
         </div>
 
+        <h2 class="histopathalogy-header">Histopathalogy</h2>
+
         <table class="subtest-table">
             <thead>
                 <tr>
@@ -296,6 +333,7 @@
         <div class="btn-row">
             <button class="btn-add-row" onclick="addRow()">+ Add New Row</button>
             <button class="btn-save" onclick="saveReport()">💾 Save Report</button>
+            <button class="btn-download" onclick="downloadReport()">⬇️ Download PDF</button>
         </div>
 
         <!-- ✅ Updated Footer -->
@@ -325,6 +363,7 @@
     <script>
         let selectedPatient = null;
         let patientId = null;
+        const { jsPDF } = window.jspdf;
 
         function displayMessage(msg) {
             const box = document.getElementById('messageBox');
@@ -384,13 +423,11 @@
             const checkedBy = document.getElementById('reportCheckedBy').value;
             const reportDate = new Date().toISOString().split('T')[0];
 
-            // Save to localStorage using patientId as key
             if (patientId) {
                 localStorage.setItem(`subtests_${patientId}`, JSON.stringify(subtests));
                 localStorage.setItem(`checkedBy_${patientId}`, checkedBy);
                 localStorage.setItem(`reportDate_${patientId}`, reportDate);
 
-                // Also update the main patient object
                 selectedPatient = {
                     ...selectedPatient,
                     subtestData: subtests,
@@ -419,6 +456,262 @@
             window.print();
         }
 
+        function downloadReport() {
+            syncPrintViews();
+
+            const hasContent = Array.from(document.querySelectorAll('.print-result'))
+                .some(div => div.textContent.trim() !== '');
+
+            if (!hasContent) {
+                displayMessage("⚠️ No results entered. Nothing to download.");
+                return;
+            }
+
+            // Create a temporary element to hold the print content with extra top spacing
+            const printElement = document.createElement('div');
+            printElement.id = 'pdf-content';
+            printElement.innerHTML = `
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 0;
+                        padding: 0;
+                        background: white;
+                    }
+                    .pdf-container {
+                        width: 210mm;
+                        height: 297mm;
+                        padding: 15mm;
+                        box-sizing: border-box;
+                        font-size: 10pt;
+                        line-height: 1.4;
+                    }
+                    /* ✅ ADD EXTRA SPACE AT TOP FOR PDF */
+                    .header-offset {
+                        height: 30mm; /* Creates blank space at top */
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 15px;
+                        padding-bottom: 10px;
+                        border-bottom: 2px solid #000;
+                    }
+                    .header h1 {
+                        color: #1a73e8;
+                        font-size: 16pt;
+                        margin: 0;
+                        font-weight: bold;
+                    }
+                    .info-section {
+                        margin-bottom: 15px;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                    }
+                    .info-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                        font-size: 10pt;
+                    }
+                    .info-item {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 4px 0;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .info-item span:first-child {
+                        font-weight: 600;
+                        color: #333;
+                        min-width: 100px;
+                    }
+                    .info-item span:last-child {
+                        font-weight: normal;
+                        color: #000;
+                        word-break: break-word;
+                    }
+                    .results-header {
+                        text-align: center;
+                        margin: 20px 0 15px 0;
+                        font-size: 14pt;
+                        color: #1a73e8;
+                        border-bottom: 1px solid #ddd;
+                        padding-bottom: 8px;
+                        font-weight: bold;
+                    }
+                    .results-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 15px;
+                        font-size: 10pt;
+                    }
+                    .results-table th {
+                        background: #eaf1fb;
+                        font-weight: bold;
+                        text-align: left;
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                    }
+                    .results-table td {
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        vertical-align: top;
+                        word-break: break-word;
+                    }
+                    .footer {
+                        margin-top: 30px;
+                        padding-top: 15px;
+                        border-top: 2px solid #000;
+                        font-size: 10pt;
+                    }
+                    .signature {
+                        margin-top: 20px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        gap: 30px;
+                    }
+                    .signature-block {
+                        flex: 1;
+                        min-width: 200px;
+                    }
+                    .signature-title {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .signature-content {
+                        margin-top: 5px;
+                    }
+                </style>
+                <div class="pdf-container">
+                    <!-- ✅ THIS CREATES VERTICAL SPACE AT THE TOP OF THE PDF -->
+                    <div class="header-offset"></div>
+                    
+                    <div class="header">
+                        <h1>CDRL Laboratory Report</h1>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span>Patient Name:</span>
+                                <span>` + document.getElementById("patientName").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Sample ID:</span>
+                                <span>` + document.getElementById("sampleId").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Age/Gender:</span>
+                                <span>` + document.getElementById("ageGender").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Contact No:</span>
+                                <span>` + document.getElementById("contact").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Referred By:</span>
+                                <span>` + document.getElementById("referredBy").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Test Name:</span>
+                                <span>` + document.getElementById("testName").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Collection Date:</span>
+                                <span>` + document.getElementById("collectionDate").textContent + `</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Report Date:</span>
+                                <span>` + document.getElementById("reportDate").textContent + `</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ✅ THIS IS THE H1 "Histopathalogy" HEADER -->
+                    <h1 class="results-header">Histopathalogy</h1>
+
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Sub Test</th>
+                                <th>Result/Finding</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ` + Array.from(document.querySelectorAll('#subtestBody tr'))
+                    .map(row => {
+                        const name = row.cells[0].textContent;
+                        const result = row.querySelector('.print-result').textContent;
+                        return '<tr><td style="width: 30%;">' + name + '</td><td style="width: 70%;">' + result + '</td></tr>';
+                    }).join('') + `
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <div class="signature">
+                            <div class="signature-block">
+                                <div class="signature-title">Report Checked By</div>
+                                <div class="signature-content">
+                                    <div>` + (document.getElementById("reportCheckedBy").value || '---') + `</div>
+                                    ` + (document.getElementById("reportCheckedBy").value ? '<img src="Signature.jpg" alt="Signature" style="width: 120px; max-height: 40px; object-fit: contain; display: block;">' : '') + `
+                                </div>
+                                <div class="signature-content">
+                                    <div>Dr. Alina Tiwari</div>
+                                    <div>Consultant Pathologist</div>
+                                    <div>NMC No: 23690</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(printElement);
+
+            // Use html2canvas to capture the content
+            html2canvas(printElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                width: 210 * 4,
+                height: 297 * 4,
+                scrollY: 0
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // ✅ START CONTENT LOWER ON PDF PAGE
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                const marginTop = 30; // 30mm from top
+
+                // Only add image if it fits or split across pages
+                if (imgHeight <= pageHeight - marginTop) {
+                    // Single page
+                    pdf.addImage(imgData, 'PNG', 0, marginTop, imgWidth, imgHeight);
+                } else {
+                    // Handle multi-page if needed
+                    pdf.addImage(imgData, 'PNG', 0, marginTop, imgWidth, imgHeight);
+                }
+
+                // Generate filename
+                const patientName = document.getElementById("patientName").textContent.replace(/\s+/g, '_');
+                const fileName = 'CDRL_Report_' + patientName + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+
+                pdf.save(fileName);
+                document.body.removeChild(printElement);
+            }).catch(err => {
+                console.error('Error generating PDF:', err);
+                displayMessage("Error generating PDF. Please try again.");
+            });
+        }
+
         function loadPatient() {
             const stored = localStorage.getItem("selectedPatient");
             selectedPatient = stored ? JSON.parse(stored) : {
@@ -441,10 +734,8 @@
                 }
             };
 
-            // Get patient ID from sample number or create a fallback
             patientId = selectedPatient.sampleNumber || selectedPatient.id || 'default';
 
-            // Load subtests from localStorage if available
             const storedSubtests = localStorage.getItem(`subtests_${patientId}`);
             const storedCheckedBy = localStorage.getItem(`checkedBy_${patientId}`);
             const storedReportDate = localStorage.getItem(`reportDate_${patientId}`);
@@ -459,8 +750,8 @@
                 selectedPatient.reportDate = storedReportDate;
             }
 
-            document.getElementById("patientName").textContent = `${selectedPatient.firstName} ${selectedPatient.lastName}`;
-            document.getElementById("ageGender").textContent = `${selectedPatient.age} / ${selectedPatient.sex}`;
+            document.getElementById("patientName").textContent = selectedPatient.firstName + ' ' + selectedPatient.lastName;
+            document.getElementById("ageGender").textContent = selectedPatient.age + ' / ' + selectedPatient.sex;
             document.getElementById("contact").textContent = selectedPatient.contact || "---";
             document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
             document.getElementById("testName").textContent = selectedPatient.testName || "---";
