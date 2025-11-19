@@ -191,7 +191,7 @@
             margin-bottom: 15px;
         }
 
-        /* ✅ Updated Footer Styling */
+        /* Footer Styling */
         .report-footer {
             margin-top: 30px;
             font-size: 14px;
@@ -336,7 +336,6 @@
             <button class="btn-download" onclick="downloadReport()">⬇️ Download PDF</button>
         </div>
 
-        <!-- ✅ Updated Footer -->
         <div class="report-footer">
             <div class="footer-signatures">
                 <div class="signature-block">
@@ -467,7 +466,7 @@
                 return;
             }
 
-            // Create a temporary element to hold the print content with extra top spacing
+            // Create a temporary element to hold the print content
             const printElement = document.createElement('div');
             printElement.id = 'pdf-content';
             printElement.innerHTML = `
@@ -486,15 +485,11 @@
                         font-size: 10pt;
                         line-height: 1.4;
                     }
-                    /* ✅ ADD EXTRA SPACE AT TOP FOR PDF */
-                    .header-offset {
-                        height: 30mm; /* Creates blank space at top */
-                    }
                     .header {
                         text-align: center;
                         margin-bottom: 15px;
                         padding-bottom: 10px;
-                        border-bottom: 2px solid #000;
+                        /* Border removed */
                     }
                     .header h1 {
                         color: #1a73e8;
@@ -535,7 +530,7 @@
                         margin: 20px 0 15px 0;
                         font-size: 14pt;
                         color: #1a73e8;
-                        border-bottom: 1px solid #ddd;
+                        /* Border removed */
                         padding-bottom: 8px;
                         font-weight: bold;
                     }
@@ -561,7 +556,7 @@
                     .footer {
                         margin-top: 30px;
                         padding-top: 15px;
-                        border-top: 2px solid #000;
+                        /* Border removed */
                         font-size: 10pt;
                     }
                     .signature {
@@ -584,11 +579,8 @@
                     }
                 </style>
                 <div class="pdf-container">
-                    <!-- ✅ THIS CREATES VERTICAL SPACE AT THE TOP OF THE PDF -->
-                    <div class="header-offset"></div>
                     
                     <div class="header">
-                        <h1>CDRL Laboratory Report</h1>
                     </div>
                     
                     <div class="info-section">
@@ -628,7 +620,6 @@
                         </div>
                     </div>
 
-                    <!-- ✅ THIS IS THE H1 "Histopathalogy" HEADER -->
                     <h1 class="results-header">Histopathalogy</h1>
 
                     <table class="results-table">
@@ -685,11 +676,11 @@
                     format: 'a4'
                 });
 
-                // ✅ START CONTENT LOWER ON PDF PAGE
+                // Set top margin for the PDF
                 const imgWidth = 210;
                 const pageHeight = 297;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                const marginTop = 30; // 30mm from top
+                const marginTop = 10;
 
                 // Only add image if it fits or split across pages
                 if (imgHeight <= pageHeight - marginTop) {
