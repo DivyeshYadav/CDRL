@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Screen</title>
+    <title>Secure Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Base styles */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -21,12 +23,14 @@
             align-items: center;
         }
 
+        /* Login Box Styling */
         .login-box {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            padding: 40px 30px;
-            width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
+            padding: 40px 35px; /* Slightly more padding */
+            width: 380px; /* Slightly wider */
+            max-width: 90%;
             text-align: center;
         }
 
@@ -34,17 +38,19 @@
             width: 80px;
             height: 80px;
             object-fit: contain;
-            margin-bottom: 15px;
+            margin-bottom: 20px; /* Increased margin */
         }
 
         .login-box h2 {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             color: #333;
+            font-weight: 700;
         }
 
+        /* Input Group */
         .input-group {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* Increased margin */
             text-align: left;
         }
 
@@ -53,56 +59,79 @@
             font-size: 14px;
             color: #555;
             margin-bottom: 5px;
+            font-weight: 600; /* Bolder label */
         }
 
         .input-group input {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ccc;
+            padding: 12px 15px; /* More padding */
+            border: 1px solid #ddd; /* Lighter border */
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px;
             outline: none;
-            transition: 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        .input-group input:focus {
+        /* Input Focus/Hover Effect (New) */
+        .input-group input:focus,
+        .input-group input:hover {
             border-color: #2575fc;
             box-shadow: 0 0 5px rgba(37, 117, 252, 0.3);
         }
 
+        /* Checkbox Group (New) */
+        .checkbox-group {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+
+        /* Button Styling */
         .btn {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: #2575fc;
             border: none;
             border-radius: 8px;
             color: white;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.3s, transform 0.1s;
         }
 
         .btn:hover {
             background: #1a5ed1;
         }
 
-        .error {
-            color: red;
-            margin-top: 10px;
-            font-size: 14px;
-            display: none;
+        .btn:active {
+            transform: scale(0.99); /* Press effect */
         }
 
-        @media (max-width: 400px) {
-            .login-box {
-                width: 90%;
-                padding: 30px 20px;
-            }
+        /* Error Message */
+        .error {
+            color: #d9534f; /* Better error color */
+            background-color: #fdd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+            font-weight: 600;
+        }
 
-            .logo {
-                width: 70px;
-                height: 70px;
+        /* Responsive Design */
+        @media (max-width: 450px) {
+            .login-box {
+                padding: 30px 25px;
             }
         }
     </style>
@@ -110,43 +139,72 @@
 
 <body>
     <div class="login-box">
-        <img src="Logo 3.png" alt="Logo" class="logo">
-        <h2>Login</h2>
-        <div class="input-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" placeholder="Enter username" />
-        </div>
-        <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter password" />
-        </div>
-        <button class="btn" onclick="login()">Login</button>
-        <p class="error" id="error"></p>
+        <img src="Logo 3.png" alt="App Logo" class="logo">
+        <h2>Welcome Back</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter username" required />
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" required />
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="rememberMe">
+                <label for="rememberMe">Remember Me</label>
+            </div>
+
+            <button type="submit" class="btn">Secure Login</button>
+            <p class="error" id="error"></p>
+        </form>
     </div>
 
     <script>
-        function login() {
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const errorMsg = document.getElementById("error");
+        // Get elements once
+        const loginForm = document.getElementById("loginForm");
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const rememberMeCheckbox = document.getElementById("rememberMe");
+        const errorMsg = document.getElementById("error");
 
+        // Use event listener on form submission (BEST PRACTICE)
+        loginForm.addEventListener('submit', function (event) {
+            // Prevent default form submission (page reload)
+            event.preventDefault();
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            const rememberMe = rememberMeCheckbox.checked;
+
+            // 1. Basic Validation
             if (username === "" || password === "") {
                 errorMsg.style.display = "block";
                 errorMsg.textContent = "⚠️ Please enter both username and password!";
                 return;
             }
 
+            // 2. Hardcoded Authentication (for demonstration)
             if (username === "admin" && password === "12345") {
                 errorMsg.style.display = "none";
-                // Save login state
-                localStorage.setItem("loggedInUser", username);
-                alert("✅ Login successful!");
-                window.location.href = "Dashboard.html";
+
+                // Save login state based on Remember Me (Updated Storage Logic)
+                const storage = rememberMe ? localStorage : sessionStorage;
+                storage.setItem("loggedInUser", username);
+
+                // Use setTimeout for a small delay before redirecting for a smoother UX
+                alert("✅ Login successful! Redirecting to dashboard...");
+                setTimeout(() => {
+                    window.location.href = "Dashboard.html";
+                }, 50);
+
             } else {
+                // 3. Invalid Credentials
                 errorMsg.style.display = "block";
-                errorMsg.textContent = "❌ Invalid username or password!";
+                errorMsg.textContent = "❌ Invalid username or password! (Hint: admin/12345)";
             }
-        }
+        });
     </script>
 </body>
 

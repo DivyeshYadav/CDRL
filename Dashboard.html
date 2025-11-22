@@ -6,10 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Laboratory Dashboard</title>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-    <style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> <style>
         /* Define Blue and Orange Variables */
         :root {
             --primary-blue: #007bff;
@@ -190,8 +189,25 @@
             background: #218838;
         }
 
-        /* --- REPORT ENTRY TABLE STYLES --- */
+        /* Loading Spinner/State (New) */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            z-index: 10;
+        }
+
+        /* --- REPORT ENTRY TABLE STYLES (Keep existing styles) --- */
         #reportEntry {
+            position: relative; /* For loading overlay */
             background: var(--white);
             padding: 25px;
             border-radius: 8px;
@@ -304,6 +320,7 @@
                 grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
 
+            /* Responsive table styles remain the same for mobile view */
             #reportEntry table,
             #reportEntry th,
             #reportEntry td {
@@ -337,7 +354,7 @@
 
 <body>
 
-    <header>🔬 Laboratory Dashboard</header>
+    <header>🔬 Professional Laboratory Dashboard</header>
 
     <div class="container">
         <div class="sidebar">
@@ -348,20 +365,20 @@
 
         <div class="main">
             <div class="cards-container">
-                <div class="card" onclick="showAddPatientForm()">Patients: <br> <span id="totalPatients">0</span></div>
+                <div class="card" onclick="showAddPatientForm()">Total Patients: <br> <span id="totalPatients">0</span></div>
                 <div class="card" onclick="showReportEntry()">Paid: <br> <span id="paidPatients">0</span></div>
                 <div class="card" onclick="showReportEntry()">Due: <br> <span id="duePatients">0</span></div>
             </div>
 
-            <div id="addPatientForm" style="display:block;">
+            <div id="addPatientForm" style="display:none;">
                 <h2>Register New Patient</h2>
                 <form id="patientRegistrationForm">
                     <div class="form-grid">
 
                         <div class="form-group name-fields">
-                            <input id="firstName" placeholder="First Name" required>
-                            <input id="middleName" placeholder="Middle Name (Optional)">
-                            <input id="lastName" placeholder="Last Name" required>
+                            <input id="firstName" type="text" placeholder="First Name" required>
+                            <input id="middleName" type="text" placeholder="Middle Name (Optional)">
+                            <input id="lastName" type="text" placeholder="Last Name" required>
                         </div>
 
                         <div class="form-group">
@@ -402,12 +419,12 @@
 
                         <div class="form-group">
                             <label for="age">Age: *</label>
-                            <input id="age" type="number" placeholder="Age (e.g., 35)" required>
+                            <input id="age" type="number" min="0" max="120" placeholder="Age (e.g., 35)" required>
                         </div>
 
                         <div class="form-group">
                             <label for="contact">Contact Number: *</label>
-                            <input id="contact" type="tel" value="0000000000" placeholder="Contact Number" required>
+                            <input id="contact" type="tel" value="0000000000" pattern="[0-9]{10}" placeholder="10 Digit Contact" required>
                         </div>
 
                         <div class="form-group">
@@ -438,8 +455,11 @@
                 </form>
             </div>
 
-            <div id="reportEntry" style="display:none;">
+            <div id="reportEntry" style="display:block;">
                 <h2>Report Entry List</h2>
+                <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                    Loading Patients... ⏳
+                </div>
                 <table>
                     <thead>
                         <tr>
@@ -477,7 +497,9 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const db = firebase.firestore();
+        
+        // Use compat syntax for v9 modular methods
+        const db = firebase.firestore(); 
         let patients = [];
 
         // --- Global Counters (Stored in LocalStorage) ---
@@ -490,12 +512,28 @@
         });
 
         // --- Dashboard Navigation & UI functions ---
+
+        /**
+         * Checks if a user is logged in before allowing access.
+         */
+        function checkLoginState() {
+            if (!localStorage.getItem("loggedInUser")) {
+                alert("Session expired or unauthorized. Please log in.");
+                window.location.href = "Login.html"; // Redirect to your Login page
+            }
+        }
+
+
         function updateCards() {
             const paid = patients.filter(p => p.paymentStatus === 'Paid').length;
             const due = patients.filter(p => p.paymentStatus === 'Due').length;
             document.getElementById('totalPatients').textContent = patients.length;
             document.getElementById('paidPatients').textContent = paid;
             document.getElementById('duePatients').textContent = due;
+        }
+
+        function showLoading(isVisible) {
+            document.getElementById('loadingOverlay').style.display = isVisible ? 'flex' : 'none';
         }
 
         function showAddPatientForm() {
@@ -511,6 +549,8 @@
         function logout() {
             if (confirm("Are you sure you want to log out?")) {
                 localStorage.removeItem("loggedInUser");
+                // Optional: Firebase Sign Out if using Auth
+                // firebase.auth().signOut().then(() => { ... }); 
                 window.location.href = "Login.html";
             }
         }
@@ -530,9 +570,10 @@
          * Adds a new patient to the Firestore database.
          */
         function addPatient() {
-            if (!document.getElementById("firstName").value || !document.getElementById("lastName").value || !document.getElementById("requestedBy").value) {
-                alert("Please fill in all required fields.");
-                return;
+            const form = document.getElementById('patientRegistrationForm');
+            if (!form.checkValidity()) {
+                 // The browser handles invalid inputs (e.g., required fields) automatically
+                 return;
             }
 
             const patient = {
@@ -542,7 +583,8 @@
                 requestedBy: document.getElementById("requestedBy").value,
                 referredBy: document.getElementById("referredBy").value,
                 sex: document.getElementById("sex").value,
-                age: document.getElementById("age").value,
+                // Ensure age is stored as a number
+                age: parseInt(document.getElementById("age").value), 
                 contact: document.getElementById("contact").value,
                 date: document.getElementById("date").value,
                 paymentStatus: document.getElementById("paymentStatus").value,
@@ -554,21 +596,24 @@
             };
 
             // SAVE TO FIREBASE 
+            showLoading(true); // Show loading state
             db.collection("patients").add(patient)
                 .then(() => {
+                    showLoading(false); // Hide loading state
 
                     // 1. Show confirmation message
                     alert(`Patient ${patient.firstName} added successfully! Bill Code: ${patient.billCode}\n\nData saved to the cloud.`);
 
                     // 2. Reset the form fields
-                    document.getElementById('patientRegistrationForm').reset();
-                    document.getElementById('contact').value = "0000000000";
-
+                    form.reset();
+                    // Keep the default value for contact input
+                    document.getElementById('contact').value = "0000000000"; 
+                    
                     // 3. Redirect to the Report Entry List view
                     showReportEntry();
-
                 })
                 .catch((error) => {
+                    showLoading(false); // Hide loading state
                     console.error("Error adding document: ", error);
                     alert("Failed to add patient. Check console for details.");
                 });
@@ -578,6 +623,7 @@
          * Listens to the Firestore database for real-time updates and renders the table.
          */
         function loadPatientsRealtime() {
+            showLoading(true); // Show loading when starting fetch
             db.collection("patients").orderBy("createdAt", "desc").onSnapshot(snapshot => {
                 patients = [];
                 snapshot.forEach(doc => {
@@ -588,7 +634,9 @@
                 // Update UI elements
                 renderPatientTable(patients);
                 updateCards();
+                showLoading(false); // Hide loading when data is rendered
             }, error => {
+                showLoading(false); // Hide loading on error
                 console.error("Error listening to Firestore: ", error);
             });
         }
@@ -603,7 +651,8 @@
 
             patientList.forEach((p, index) => {
                 const fullName = [p.firstName, p.middleName, p.lastName].filter(n => n).join(" ");
-                const statusClass = `status-${p.paymentStatus || 'Due'}`;
+                const statusValue = p.paymentStatus || 'Due';
+                const statusClass = `status-${statusValue}`;
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td data-label="${headers[0]}" onclick="viewPatient('${p.id}')">${fullName}</td>
@@ -613,18 +662,23 @@
                     <td data-label="${headers[4]}">${p.referredBy}</td>
                     <td data-label="${headers[5]}">${p.date}</td>
                     <td data-label="${headers[6]}">${p.sampleNumber}</td>
-                    <td data-label="${headers[7]}"><span class="status-badge ${statusClass}">${p.paymentStatus}</span></td>
+                    <td data-label="${headers[7]}"><span class="status-badge ${statusClass}">${statusValue}</span></td>
                     <td data-label="${headers[8]}"><button class="delete-btn" onclick="deletePatient('${p.id}')">🗑️</button></td>
                 `;
                 table.appendChild(row);
             });
+
+            // Display a message if no patients are found
+            if (patientList.length === 0) {
+                 table.innerHTML = '<tr><td colspan="9" style="text-align: center; font-style: italic;">No patient records found.</td></tr>';
+            }
         }
 
         /**
          * Deletes a patient from the Firebase database.
          */
         function deletePatient(patientId) {
-            if (confirm(`Are you sure you want to delete this patient?`)) {
+            if (confirm(`Are you sure you want to delete this patient? This action cannot be undone.`)) {
                 db.collection("patients").doc(patientId).delete()
                     .then(() => {
                         alert("Patient successfully deleted from the cloud.");
@@ -653,12 +707,17 @@
 
         // Initialize display on load
         document.addEventListener('DOMContentLoaded', () => {
-            // Start listening for patient updates immediately
-            loadPatientsRealtime();
-
+            checkLoginState(); // Check if the user is logged in
+            loadPatientsRealtime(); // Start listening for patient updates immediately
+            
+            // Set the default view to the list (Report Entry)
+            showReportEntry(); 
             // Ensure the contact input has the default value when the page loads
             document.getElementById('contact').value = "0000000000";
-            showReportEntry(); // Default to showing the list
+            
+            // Set default date to today for convenience
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
         });
     </script>
 

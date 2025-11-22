@@ -5,6 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Patient Details - Lab Report</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
     <style>
         @page {
             size: A4;
@@ -104,13 +108,26 @@
             margin-top: 15px;
         }
 
-        .btn-row button {
-            padding: 6px 12px;
+        .btn-row button,
+        .btn-row a.btn-back {
+            padding: 8px 14px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-save {
+            background: #28a745;
+        }
+
+        .btn-save:hover {
+            background: #218838;
         }
 
         .btn-print {
@@ -120,6 +137,15 @@
         .btn-print:hover {
             background: #0056b3;
         }
+
+        .btn-back {
+            background: #6c757d;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+        }
+
 
         @media print {
             body {
@@ -143,14 +169,38 @@
                 border: none;
             }
 
+            /* Ensure only the chosen signature appears in print */
             .signature-box img {
-                display: block;
+                display: block !important;
+            }
+
+            /* If the doctor hasn't been selected, don't show the image space */
+            #signatureImage[src=""],
+            #signatureImage:not([style*="block"]) {
+                display: none !important;
             }
         }
     </style>
 </head>
 
 <body>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-kTFO-jZi3ztjJVcGSrExpf2tN4UdnZc",
+            authDomain: "cdrl-b6939.firebaseapp.com",
+            projectId: "cdrl-b6939",
+            storageBucket: "cdrl-b6939.firebasestorage.app",
+            messagingSenderId: "461637510863",
+            appId: "1:461637510863:web:24380b7b504554299239ba",
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+    </script>
+
+
     <div class="container">
         <h1>Patient Details</h1>
 
@@ -158,15 +208,15 @@
             <div class="info-item"><span>Patient Name:</span> <span id="patientName">---</span></div>
             <div class="info-item"><span>Sample ID:</span> <span id="sampleId">---</span></div>
             <div class="info-item"><span>Age/Gender:</span> <span id="ageGender">---</span></div>
-            <div class="info-item"><span>Contact No:</span> <span id="contact">---</span></div>
+            <div class="info-item"><span>Bill Code:</span> <span id="billCode">---</span></div>
             <div class="info-item"><span>Referred By:</span> <span id="referredBy">---</span></div>
             <div class="info-item"><span>Requested By:</span> <span id="requestedBy">---</span></div>
             <div class="info-item"><span>Date of Collection:</span> <span id="collectionDate">---</span></div>
+            <div class="info-item"><span>Contact No:</span> <span id="contact">---</span></div>
             <div class="info-item"><span>Date of Registration:</span> <span id="registrationDate">---</span></div>
             <div class="info-item"><span>Date of Reporting:</span> <span id="reportDate">---</span></div>
         </div>
-
-        <!-- Editable Subtest Table -->
+        <h1>HISTOPATHALOGY</h1>
         <table class="subtest-table" id="reportSubtests">
             <thead>
                 <tr>
@@ -198,28 +248,55 @@
             </tbody>
         </table>
 
-        <!-- Report Footer -->
         <div class="report-footer">
             <label><strong>Report Checked By:</strong></label>
             <div class="signature-box">
                 <select id="reportCheckedBy" onchange="toggleSignature()">
                     <option value="">-- Select --</option>
                     <option value="Alina Tiwari">Alina Tiwari</option>
-                </select>
+                    </select>
                 <img id="signatureImage" src="Signature.jpg" alt="Signature">
             </div>
             <p><strong>Consultant Pathologist</strong><br>NMC No: 23690</p>
         </div>
 
         <div class="btn-row">
+            <button class="btn-back" onclick="window.location.replace('Dashboard.html')">⬅️ Back to Dashboard</button>
+            <button class="btn-save" onclick="saveReportData()">💾 Save Report</button>
             <button class="btn-print" onclick="prepareAndPrint()">🖨️ Print</button>
         </div>
     </div>
 
     <script>
-        // Load patient info from localStorage
-        const selectedPatient = JSON.parse(localStorage.getItem("selectedPatient"));
-        if (selectedPatient) {
+        // Load patient info from localStorage (safe parse)
+        const _rawSelectedPatient = localStorage.getItem("selectedPatient");
+        let selectedPatient = null;
+        if (_rawSelectedPatient) {
+            try {
+                selectedPatient = JSON.parse(_rawSelectedPatient);
+            } catch (err) {
+                console.warn("Could not parse selectedPatient from localStorage:", err);
+                selectedPatient = null;
+            }
+        }
+
+        if (!selectedPatient) {
+            alert("No patient selected. Returning to dashboard.");
+            window.location.replace("Dashboard.html"); // Use replace for clean history
+        }
+
+        // Helper function to format date
+        const formatDate = (timestamp) => {
+            if (timestamp && timestamp.toDate) {
+                return timestamp.toDate().toLocaleDateString('en-CA');
+            }
+            return timestamp || '---';
+        };
+
+        /**
+         * Populates the static patient information fields.
+         */
+        function fillPatientInfo() {
             document.getElementById("patientName").textContent =
                 `${selectedPatient.firstName} ${selectedPatient.middleName || ""} ${selectedPatient.lastName || ""}`;
             document.getElementById("ageGender").textContent =
@@ -229,34 +306,155 @@
             document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
             document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || "---";
             document.getElementById("collectionDate").textContent = selectedPatient.date || "---";
-            document.getElementById("registrationDate").textContent = selectedPatient.date || "---";
-            document.getElementById("reportDate").textContent = selectedPatient.date || "---";
-            document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || "---";
+            // NOTE: Use a placeholder for Bill Code if it's not in your object
+            document.getElementById("billCode").textContent = selectedPatient.billCode || "---"; 
+            document.getElementById("registrationDate").textContent = formatDate(selectedPatient.createdAt) || selectedPatient.date || "---";
+
+            // Set Report Date to today's date
+            const today = new Date().toLocaleDateString('en-CA');
+            document.getElementById("reportDate").textContent = today;
         }
+
+
+        /**
+         * Fills report inputs with existing data from Firestore.
+         */
+        function fillReportInputs() {
+            const subtestData = selectedPatient.subtestData || {};
+
+            // List of report fields to populate
+            const fields = ["chiefComplaint", "usgFindings", "gross", "microscopy", "impression"];
+
+            fields.forEach(fieldId => {
+                const inputElement = document.getElementById(fieldId);
+                if (inputElement && subtestData[fieldId]) {
+                    inputElement.value = subtestData[fieldId];
+                }
+            });
+
+            // Fill the 'Report Checked By' if saved
+            const checkedBy = subtestData.reportCheckedBy;
+            if (checkedBy) {
+                document.getElementById("reportCheckedBy").value = checkedBy;
+                toggleSignature(); // Show the signature if a doctor is selected
+            }
+        }
+
+
+        /**
+         * Saves the report data (subtest results) back to the Firestore document.
+         */
+        async function saveReportData() {
+            if (!selectedPatient || !selectedPatient.id) {
+                alert("Cannot save: Patient ID is missing.");
+                return;
+            }
+
+            const subtestData = {
+                chiefComplaint: document.getElementById("chiefComplaint").value.trim(),
+                usgFindings: document.getElementById("usgFindings").value.trim(),
+                gross: document.getElementById("gross").value.trim(),
+                microscopy: document.getElementById("microscopy").value.trim(),
+                impression: document.getElementById("impression").value.trim(),
+                reportCheckedBy: document.getElementById("reportCheckedBy").value,
+                reportDate: document.getElementById("reportDate").textContent, // Save the reported date
+            };
+
+            // Remove empty fields to keep the document clean
+            Object.keys(subtestData).forEach(key => {
+                if (!subtestData[key] && key !== 'reportCheckedBy') { // Keep reportCheckedBy even if empty
+                    delete subtestData[key];
+                }
+            });
+            
+            // Check if there is anything to save besides the doctor's name
+            const relevantFields = ['chiefComplaint', 'usgFindings', 'gross', 'microscopy', 'impression'];
+            const hasReportData = relevantFields.some(field => subtestData[field]);
+
+            if (Object.keys(subtestData).length === 0 || !hasReportData) {
+                 alert("Report is empty. Please enter some results before saving.");
+                 return;
+            }
+
+            try {
+                // Update the document in Firestore
+                await db.collection("patients").doc(selectedPatient.id).update({
+                    subtestData: subtestData
+                });
+
+                alert("Report data saved successfully!");
+
+                // Update the local patient object for subsequent use/print
+                selectedPatient.subtestData = subtestData;
+                localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
+            } catch (error) {
+                console.error("Error saving report data: ", error);
+                alert("Failed to save report data. Check console for details.");
+            }
+        }
+
 
         function toggleSignature() {
             const sel = document.getElementById("reportCheckedBy");
             const img = document.getElementById("signatureImage");
-            img.style.display = sel.value ? "block" : "none";
+
+            // Only show signature if a doctor is selected AND we have a signature image for them
+            if (sel.value === "Alina Tiwari") {
+                img.style.display = "block";
+                img.setAttribute('src', 'Signature.jpg'); 
+            } else {
+                img.style.display = "none";
+                img.setAttribute('src', '');
+            }
         }
 
         function prepareAndPrint() {
+            // Check if a doctor is selected before printing
+            if (!document.getElementById("reportCheckedBy").value) {
+                alert("Please select the 'Report Checked By' doctor before printing.");
+                return;
+            }
+            
             // Hide any empty subtest rows before printing
             const rows = document.querySelectorAll("#reportSubtests tbody tr");
-            rows.forEach(row => {
+            const originalContents = []; // To restore after print
+
+            rows.forEach((row, index) => {
                 const input = row.querySelector("input[type='text']");
-                if (!input.value.trim()) {
+                const fieldId = input.id;
+                const displayCell = row.querySelector("td:last-child");
+
+                // Store original content
+                originalContents[index] = displayCell.innerHTML;
+                
+                // Get value from the currently active input (or saved data)
+                const displayValue = input.value.trim() || (selectedPatient.subtestData && selectedPatient.subtestData[fieldId]);
+
+                if (!displayValue) {
                     row.style.display = "none";
                 } else {
+                    // Replace input with plain text for printing clarity
+                    displayCell.innerHTML = displayValue; 
                     row.style.display = "table-row";
                 }
             });
 
+
             window.print();
 
-            // Restore all rows after print
-            rows.forEach(row => row.style.display = "table-row");
+            // Restore input fields after printing
+            rows.forEach((row, index) => {
+                const displayCell = row.querySelector("td:last-child");
+                displayCell.innerHTML = originalContents[index]; // Restore input field
+                row.style.display = "table-row"; // Show all rows again
+            });
         }
+
+        // Initialize display on load
+        document.addEventListener('DOMContentLoaded', () => {
+            fillPatientInfo();
+            fillReportInputs();
+        });
     </script>
 </body>
 
