@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* CSS STYLES FOR SCREEN AND PRINT */
         @page {
             size: A4;
             margin: 15mm;
@@ -249,7 +250,6 @@
 
             @page {
                 margin-top: 30mm;
-                /* Add top margin for printed page */
             }
 
             .container {
@@ -312,12 +312,14 @@
             <div class="info-item"><span>Sample ID:</span><span id="sampleId">---</span></div>
             <div class="info-item"><span>Age/Gender:</span><span id="ageGender">---</span></div>
             <div class="info-item"><span>Contact No:</span><span id="contact">---</span></div>
+
             <div class="info-item"><span>Referred By:</span><span id="referredBy">---</span></div>
+            <div class="info-item"><span>Requested By:</span><span id="requestedBy">---</span></div>
+
             <div class="info-item"><span>Test Name:</span><span id="testName">---</span></div>
             <div class="info-item"><span>Collection Date:</span><span id="collectionDate">---</span></div>
             <div class="info-item"><span>Report Date:</span><span id="reportDate">---</span></div>
         </div>
-
         <h2 class="histopathalogy-header">Histopathalogy</h2>
 
         <table class="subtest-table">
@@ -360,15 +362,20 @@
     </div>
 
     <script>
+        // JAVASCRIPT LOGIC
         let selectedPatient = null;
         let patientId = null;
-        const { jsPDF } = window.jspdf;
+        const {
+            jsPDF
+        } = window.jspdf;
 
         function displayMessage(msg) {
             const box = document.getElementById('messageBox');
             box.textContent = msg;
             box.style.display = 'block';
-            setTimeout(() => { box.style.display = 'none'; }, 4000);
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 4000);
         }
 
         function goToDashboard() {
@@ -415,7 +422,9 @@
                 const name = row.cells[0].textContent.trim();
                 const value = row.querySelector('.edit-area').value.trim();
                 if (name) {
-                    subtests[name] = { value };
+                    subtests[name] = {
+                        value
+                    };
                 }
             });
 
@@ -423,10 +432,12 @@
             const reportDate = new Date().toISOString().split('T')[0];
 
             if (patientId) {
+                // Save subtest results to localStorage
                 localStorage.setItem(`subtests_${patientId}`, JSON.stringify(subtests));
                 localStorage.setItem(`checkedBy_${patientId}`, checkedBy);
                 localStorage.setItem(`reportDate_${patientId}`, reportDate);
 
+                // Update the current patient object
                 selectedPatient = {
                     ...selectedPatient,
                     subtestData: subtests,
@@ -435,6 +446,8 @@
                 };
                 localStorage.setItem("selectedPatient", JSON.stringify(selectedPatient));
 
+                document.getElementById("reportDate").textContent = reportDate;
+
                 displayMessage("Report saved successfully!");
             } else {
                 displayMessage("Error: No patient ID found for saving");
@@ -442,6 +455,7 @@
         }
 
         function prepareAndPrint() {
+            saveReport();
             syncPrintViews();
 
             const hasContent = Array.from(document.querySelectorAll('.print-result'))
@@ -456,6 +470,7 @@
         }
 
         function downloadReport() {
+            saveReport();
             syncPrintViews();
 
             const hasContent = Array.from(document.querySelectorAll('.print-result'))
@@ -466,13 +481,13 @@
                 return;
             }
 
-            // Create a temporary element to hold the print content
+            // --- PDF GENERATION LOGIC ---
             const printElement = document.createElement('div');
             printElement.id = 'pdf-content';
             printElement.innerHTML = `
                 <style>
-                    body { 
-                        font-family: Arial, sans-serif; 
+                    body {
+                        font-family: Arial, sans-serif;
                         margin: 0;
                         padding: 0;
                         background: white;
@@ -485,17 +500,23 @@
                         font-size: 10pt;
                         line-height: 1.4;
                     }
-                    .header {
+                    /* Custom Header for PDF */
+                    .report-header { 
                         text-align: center;
-                        margin-bottom: 15px;
+                        margin-bottom: 20px;
                         padding-bottom: 10px;
-                        /* Border removed */
+                        border-bottom: 2px solid #1a73e8; 
                     }
-                    .header h1 {
+                    .report-header h1 {
                         color: #1a73e8;
-                        font-size: 16pt;
-                        margin: 0;
+                        font-size: 18pt;
+                        margin: 0 0 5px 0;
                         font-weight: bold;
+                    }
+                    .report-header p {
+                        margin: 0;
+                        font-size: 10pt;
+                        color: #555;
                     }
                     .info-section {
                         margin-bottom: 15px;
@@ -520,17 +541,11 @@
                         color: #333;
                         min-width: 100px;
                     }
-                    .info-item span:last-child {
-                        font-weight: normal;
-                        color: #000;
-                        word-break: break-word;
-                    }
                     .results-header {
                         text-align: center;
                         margin: 20px 0 15px 0;
                         font-size: 14pt;
                         color: #1a73e8;
-                        /* Border removed */
                         padding-bottom: 8px;
                         font-weight: bold;
                     }
@@ -540,23 +555,20 @@
                         margin-top: 15px;
                         font-size: 10pt;
                     }
-                    .results-table th {
-                        background: #eaf1fb;
-                        font-weight: bold;
-                        text-align: left;
-                        padding: 8px;
-                        border: 1px solid #ddd;
-                    }
-                    .results-table td {
+                    .results-table th, .results-table td {
                         padding: 8px;
                         border: 1px solid #ddd;
                         vertical-align: top;
                         word-break: break-word;
                     }
+                    .results-table th {
+                        background: #eaf1fb;
+                        font-weight: bold;
+                        text-align: left;
+                    }
                     .footer {
                         margin-top: 30px;
                         padding-top: 15px;
-                        /* Border removed */
                         font-size: 10pt;
                     }
                     .signature {
@@ -574,13 +586,19 @@
                         font-weight: bold;
                         margin-bottom: 5px;
                     }
-                    .signature-content {
-                        margin-top: 5px;
+                    .signature-content img {
+                        width: 120px; 
+                        max-height: 40px; 
+                        object-fit: contain; 
+                        display: block;
                     }
                 </style>
                 <div class="pdf-container">
                     
-                    <div class="header">
+                    <div class="report-header">
+                        <h1>XYZ Hospital and Diagnostics</h1>
+                        <p>123 Main Street, Anytown, USA</p>
+                        <p>Phone: (555) 123-4567 | Email: info@xyz.com</p>
                     </div>
                     
                     <div class="info-section">
@@ -601,10 +619,17 @@
                                 <span>Contact No:</span>
                                 <span>` + document.getElementById("contact").textContent + `</span>
                             </div>
+                            
                             <div class="info-item">
                                 <span>Referred By:</span>
                                 <span>` + document.getElementById("referredBy").textContent + `</span>
                             </div>
+                            
+                            <div class="info-item">
+                                <span>Requested By:</span>
+                                <span>` + document.getElementById("requestedBy").textContent + `</span>
+                            </div>
+                            
                             <div class="info-item">
                                 <span>Test Name:</span>
                                 <span>` + document.getElementById("testName").textContent + `</span>
@@ -625,16 +650,17 @@
                     <table class="results-table">
                         <thead>
                             <tr>
-                                <th>Sub Test</th>
-                                <th>Result/Finding</th>
+                                <th style="width: 30%;">Sub Test</th>
+                                <th style="width: 70%;">Result/Finding</th>
                             </tr>
                         </thead>
                         <tbody>
                             ` + Array.from(document.querySelectorAll('#subtestBody tr'))
+                    .filter(row => row.querySelector('.print-result').textContent.trim() !== '')
                     .map(row => {
                         const name = row.cells[0].textContent;
                         const result = row.querySelector('.print-result').textContent;
-                        return '<tr><td style="width: 30%;">' + name + '</td><td style="width: 70%;">' + result + '</td></tr>';
+                        return '<tr><td>' + name + '</td><td>' + result + '</td></tr>';
                     }).join('') + `
                         </tbody>
                     </table>
@@ -645,7 +671,7 @@
                                 <div class="signature-title">Report Checked By</div>
                                 <div class="signature-content">
                                     <div>` + (document.getElementById("reportCheckedBy").value || '---') + `</div>
-                                    ` + (document.getElementById("reportCheckedBy").value ? '<img src="Signature.jpg" alt="Signature" style="width: 120px; max-height: 40px; object-fit: contain; display: block;">' : '') + `
+                                    ` + (document.getElementById("reportCheckedBy").value ? '<img src="Signature.jpg" alt="Signature">' : '') + `
                                 </div>
                                 <div class="signature-content">
                                     <div>Dr. Alina Tiwari</div>
@@ -660,7 +686,6 @@
 
             document.body.appendChild(printElement);
 
-            // Use html2canvas to capture the content
             html2canvas(printElement, {
                 scale: 2,
                 useCORS: true,
@@ -676,22 +701,13 @@
                     format: 'a4'
                 });
 
-                // Set top margin for the PDF
                 const imgWidth = 210;
                 const pageHeight = 297;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 const marginTop = 10;
 
-                // Only add image if it fits or split across pages
-                if (imgHeight <= pageHeight - marginTop) {
-                    // Single page
-                    pdf.addImage(imgData, 'PNG', 0, marginTop, imgWidth, imgHeight);
-                } else {
-                    // Handle multi-page if needed
-                    pdf.addImage(imgData, 'PNG', 0, marginTop, imgWidth, imgHeight);
-                }
+                pdf.addImage(imgData, 'PNG', 0, marginTop, imgWidth, imgHeight);
 
-                // Generate filename
                 const patientName = document.getElementById("patientName").textContent.replace(/\s+/g, '_');
                 const fileName = 'CDRL_Report_' + patientName + '_' + new Date().toISOString().split('T')[0] + '.pdf';
 
@@ -700,29 +716,42 @@
             }).catch(err => {
                 console.error('Error generating PDF:', err);
                 displayMessage("Error generating PDF. Please try again.");
+                document.body.removeChild(printElement);
             });
         }
 
         function loadPatient() {
             const stored = localStorage.getItem("selectedPatient");
             selectedPatient = stored ? JSON.parse(stored) : {
-                firstName: "John",
-                lastName: "Doe",
-                age: "30",
+                firstName: "TRET",
+                lastName: "TERT",
+                age: "54",
                 sex: "Male",
-                contact: "",
-                referredBy: "",
-                testName: "",
-                sampleNumber: "S-001",
+                contact: "0000000000",
+                referredBy: "Dr. Smith (Clinic A)", // MOCK DATA: Referred By
+                requestedBy: "Dr. Jones (On-Site)", // MOCK DATA: Requested By (New Field)
+                testName: "Medium Tissue Biopsy Test",
+                sampleNumber: "S-103",
                 dateCollected: "2025-11-10",
                 reportDate: "2025-11-17",
                 subtestData: {
-                    "Chief Complaint": { value: "" },
-                    "USG Findings": { value: "" },
-                    "Gross": { value: "" },
-                    "Microscopy": { value: "" },
-                    "Impression": { value: "" }
-                }
+                    "Chief Complaint": {
+                        value: ""
+                    },
+                    "USG Findings": {
+                        value: ""
+                    },
+                    "Gross": {
+                        value: ""
+                    },
+                    "Microscopy": {
+                        value: ""
+                    },
+                    "Impression": {
+                        value: ""
+                    }
+                },
+                checkedBy: ""
             };
 
             patientId = selectedPatient.sampleNumber || selectedPatient.id || 'default';
@@ -741,17 +770,21 @@
                 selectedPatient.reportDate = storedReportDate;
             }
 
+            // Inject patient data into HTML
             document.getElementById("patientName").textContent = selectedPatient.firstName + ' ' + selectedPatient.lastName;
             document.getElementById("ageGender").textContent = selectedPatient.age + ' / ' + selectedPatient.sex;
             document.getElementById("contact").textContent = selectedPatient.contact || "---";
             document.getElementById("referredBy").textContent = selectedPatient.referredBy || "---";
+            document.getElementById("requestedBy").textContent = selectedPatient.requestedBy || "---"; // NEW LINE
             document.getElementById("testName").textContent = selectedPatient.testName || "---";
             document.getElementById("collectionDate").textContent = selectedPatient.dateCollected || "---";
             document.getElementById("reportDate").textContent = selectedPatient.reportDate || "---";
             document.getElementById("sampleId").textContent = selectedPatient.sampleNumber || "---";
+
             document.getElementById("reportCheckedBy").value = selectedPatient.checkedBy || "";
             toggleSignature();
 
+            // Populate subtest table
             const tbody = document.getElementById('subtestBody');
             tbody.innerHTML = '';
             const subtests = selectedPatient.subtestData || {};
